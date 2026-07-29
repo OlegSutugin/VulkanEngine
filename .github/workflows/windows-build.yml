@@ -2,9 +2,9 @@ name: Windows build
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "main", "master" ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ "main", "master" ]
 
 env:
   TARGETS: VulkanEngine
