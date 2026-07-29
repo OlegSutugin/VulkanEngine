@@ -4,7 +4,8 @@
 
 int main()
 {
-    const VulkanEngine::Engine engine;
+    VulkanEngine::Engine engine;
+    engine.run();
 
     return 0;
 }

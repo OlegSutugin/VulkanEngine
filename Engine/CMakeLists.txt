@@ -9,6 +9,12 @@ add_executable(${PROJECT_NAME} Source/main.cpp)
 set(ENGINE_SOURCE_FILES
 	Source/Core/Engine.h
 	Source/Core/Engine.cpp
+
+	Source/Window/GLFW/GLFWWindow.h
+	Source/Window/GLFW/GLFWWindow.cpp
+	Source/Window/GLFW/GLFWWindowManager.h
+	Source/Window/GLFW/GLFWWindowManager.cpp
+
 	Source/pch.cpp
 	Source/pch.h
 	.clang-format
@@ -17,7 +23,15 @@ set(ENGINE_SOURCE_FILES
 add_library(${PROJECT_NAME}Lib ${ENGINE_SOURCE_FILES})
 target_include_directories(${PROJECT_NAME}Lib PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/Source)
 
+# Add GLFW library
+add_subdirectory(ThirdParty/glfw-3.4 "${CMAKE_CURRENT_BINARY_DIR}/glfw_build")
+include_directories(ThirdParty/glfw-3.4/include)
+set_property(TARGET glfw PROPERTY FOLDER thirdparty/GLFW3)
+set_property(TARGET uninstall PROPERTY FOLDER thirdparty/GLFW3)
+set_property(TARGET update_mappings PROPERTY FOLDER thirdparty/GLFW3)
+
 # Link libraries
+target_link_libraries(${PROJECT_NAME}Lib PUBLIC glfw)
 target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}Lib)
 
 #folders
