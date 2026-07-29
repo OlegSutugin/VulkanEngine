@@ -27,7 +27,7 @@ class Config:
     FRESH = True
     CLEAN = True
     VERBOSE = False
-    SOURCE_DIR = "engine"
+    SOURCE_DIR = "Engine"
 
 ###############################################################
 
