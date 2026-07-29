@@ -14,7 +14,7 @@ Engine::Engine()
     const auto windowCreationResult = m_windowManager->createWindow(WindowSettings{});
     if (!windowCreationResult)
     {
-        //log
+        // log
         return;
     }
 
@@ -28,7 +28,7 @@ Engine::Engine()
 
 Engine::~Engine() = default;
 
-void VulkanEngine::Engine::run() 
+void VulkanEngine::Engine::run()
 {
     if (!m_initialized)
     {

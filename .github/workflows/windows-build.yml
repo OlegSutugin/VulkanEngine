@@ -21,6 +21,22 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Install GLFW dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          libgl1-mesa-dev \
+          libxi-dev \
+          libx11-dev \
+          libxrandr-dev \
+          libxinerama-dev \
+          libxcursor-dev \
+          mesa-common-dev \
+          libwayland-dev \
+          wayland-protocols \
+          wayland-scanner \
+          libxkbcommon-dev
+          
     - name: Install Conan
       run: pip install conan
 

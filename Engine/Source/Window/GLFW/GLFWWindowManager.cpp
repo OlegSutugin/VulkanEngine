@@ -55,7 +55,7 @@ std::expected<WindowId, WindowCreationError> GLFWWindowManager::createWindow(con
 std::shared_ptr<GLFWWindow> GLFWWindowManager::getWindowById(WindowId id) const
 {
     const auto it = m_windows.find(id);
-    return it != m_windows.end() ? it->second : nullptr ;
+    return it != m_windows.end() ? it->second : nullptr;
 }
 
 bool GLFWWindowManager::areAllWindowsClosed() const
@@ -63,7 +63,7 @@ bool GLFWWindowManager::areAllWindowsClosed() const
     return m_windows.empty();
 }
 
-void GLFWWindowManager::cleanupClosedWindows() 
+void GLFWWindowManager::cleanupClosedWindows()
 {
     auto it = m_windows.begin();
     while (it != m_windows.end())
