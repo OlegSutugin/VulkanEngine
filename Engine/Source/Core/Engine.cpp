@@ -1,4 +1,5 @@
 #include "Engine.h"
+#include "Log/Log.h"
 #include "Window/GLFW/GLFWWindowManager.h"
 #include <format>
 #include <iostream>
@@ -7,7 +8,8 @@ using namespace VulkanEngine;
 
 Engine::Engine()
 {
-    std::cout << "Initialize Engine" << std::endl;
+    Log::getInstance().log(VulkanEngine::LogVerbosity::Display, "Initialize Engine");
+    Log::getInstance().log(VulkanEngine::LogVerbosity::Error, "Initialize Engine");
 
     m_windowManager = std::make_unique<GLFWWindowManager>();
 

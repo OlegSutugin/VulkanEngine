@@ -9,6 +9,10 @@ add_executable(${PROJECT_NAME} Source/main.cpp)
 set(ENGINE_SOURCE_FILES
 	Source/Core/Engine.h
 	Source/Core/Engine.cpp
+	Source/Core/Utility.h
+	
+	Source/Log/Log.h
+	Source/Log/Log.cpp
 
 	Source/Window/GLFW/GLFWWindow.h
 	Source/Window/GLFW/GLFWWindow.cpp
@@ -30,8 +34,12 @@ set_property(TARGET glfw PROPERTY FOLDER thirdparty/GLFW3)
 set_property(TARGET uninstall PROPERTY FOLDER thirdparty/GLFW3)
 set_property(TARGET update_mappings PROPERTY FOLDER thirdparty/GLFW3)
 
+# Add conan libs
+find_package(spdlog REQUIRED)
+
 # Link libraries
 target_link_libraries(${PROJECT_NAME}Lib PUBLIC glfw)
+target_link_libraries(${PROJECT_NAME}Lib PUBLIC spdlog::spdlog)
 target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}Lib)
 
 #folders
