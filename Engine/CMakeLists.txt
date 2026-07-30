@@ -42,6 +42,10 @@ target_link_libraries(${PROJECT_NAME}Lib PUBLIC glfw)
 target_link_libraries(${PROJECT_NAME}Lib PUBLIC spdlog::spdlog)
 target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}Lib)
 
+if(MSVC)
+    target_compile_options(${PROJECT_NAME}Lib PUBLIC /Zc:preprocessor)
+endif()
+
 #folders
 set_property(GLOBAL PROPERTY USE_FOLDERS On)
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER Engine)

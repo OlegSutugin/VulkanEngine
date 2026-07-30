@@ -6,10 +6,11 @@
 
 using namespace VulkanEngine;
 
+DEFINE_LOG_CATEGORY_STATIC(LogEngine);
+
 Engine::Engine()
 {
-    Log::getInstance().log(VulkanEngine::LogVerbosity::Display, "Initialize Engine");
-    Log::getInstance().log(VulkanEngine::LogVerbosity::Error, "Initialize Engine");
+    VE_LOG(LogEngine, Display, "Initialize Engine");
 
     m_windowManager = std::make_unique<GLFWWindowManager>();
 
