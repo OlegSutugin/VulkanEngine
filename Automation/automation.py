@@ -106,9 +106,13 @@ def build_project(action: Action, configuration: Configuration):
         print(f"Failed to build project in {configuration} mode.")
     os.chdir("..")
 
-def get_source_files(source_dir, extensions):
+def get_source_files(source_dir, extensions, exclude_dirs=None):
+    exclude_dirs = set(exclude_dirs or [])
     source_files = []
-    for root, _, files in os.walk(source_dir):
+    for root, dirs, files in os.walk(source_dir):
+        # исключаем ненужные папки из дальнейшего обхода
+        dirs[:] = [d for d in dirs if d not in exclude_dirs]
+
         for file in files:
             if any(file.endswith(ext) for ext in extensions):
                 source_files.append(os.path.join(root, file))
@@ -116,7 +120,7 @@ def get_source_files(source_dir, extensions):
 
 def run_clang_format(source_dir):
     extensions = ['.cpp', '.h', '.hpp']
-    format_sources = get_source_files(source_dir, extensions)
+    format_sources = get_source_files(source_dir, extensions, exclude_dirs=['ThirdParty'])
 
     if not format_sources:
         print(f'No source files found in {source_dir}.')

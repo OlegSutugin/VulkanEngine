@@ -16,7 +16,6 @@ protected:
     NonCopyable& operator=(NonCopyable&&) = delete;
 };
 
-
 }  // namespace VulkanEngine
 
 #if defined(_MSC_VER)

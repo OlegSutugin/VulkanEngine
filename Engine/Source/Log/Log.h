@@ -80,11 +80,11 @@ concept ValidVerbosityLevel = V == LogVerbosity::NoLogging ||  //
 #define VE_LOG_IMPL(categoryName, verbosity, showLocation, formatStr, ...)                                                             \
     do                                                                                                                                 \
     {                                                                                                                                  \
-        if constexpr (VulkanEngine::LogVerbosity::verbosity >= VulkanEngine::c_minVerbosity &&                                        \
+        if constexpr (VulkanEngine::LogVerbosity::verbosity >= VulkanEngine::c_minVerbosity &&                                         \
                       VulkanEngine::LogVerbosity::verbosity <= VulkanEngine::c_maxVerbosity)                                           \
         {                                                                                                                              \
             static_assert(VulkanEngine::ValidVerbosityLevel<VulkanEngine::LogVerbosity::verbosity>,                                    \
-                "Verbosity should be one of Display, Warning, Error, Log, Critical");                                          \
+                "Verbosity should be one of Display, Warning, Error, Log, Critical");                                                  \
             static_assert(VulkanEngine::ValidLogCategory<decltype(categoryName)>, "Category must be of a type LogCategory");           \
             static_assert(VulkanEngine::LoggableMessage<decltype(formatStr)>, "Log message should be convertable to string");          \
             VulkanEngine::Log::getInstance().log(                                                                                      \

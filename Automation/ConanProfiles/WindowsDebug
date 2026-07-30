@@ -7,3 +7,6 @@ compiler.runtime=dynamic
 compiler.runtime_type=Debug
 compiler.version=194
 os=Windows
+
+[conf]
+tools.cmake.cmaketoolchain:generator=Ninja
