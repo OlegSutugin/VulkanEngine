@@ -9,7 +9,7 @@ if %errorlevel% NEQ 0 (
 
 REM check args
 if "%~1"=="" (
-    echo "Usage: build.bat clean|generate|build|clang_format"
+    echo "Usage: build.bat clean|generate|build|clang_format|compile_shaders"
     exit /b 1
 )
 

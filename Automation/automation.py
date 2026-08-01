@@ -3,6 +3,7 @@ import os
 import shutil
 import subprocess
 from enum import Enum
+from pathlib import Path
 
 class Platform(Enum):
     X64 = "x64"
@@ -17,6 +18,7 @@ class Action(Enum):
     GENERATE = "generate"
     BUILD = "build"
     CLANG_FORMAT = "clang_format"
+    COMPILE_SHADERS = "compile_shaders"
 
 ##################### manual configuration ####################
 
@@ -28,12 +30,15 @@ class Config:
     CLEAN = True
     VERBOSE = False
     SOURCE_DIR = "Engine"
+    VULKAN_SDK = os.environ.get("VULKAN_SDK", "D:/VulkanSDK/1.4.304.1")
 
 ###############################################################
 
 FRESH_ARG = "--fresh" if Config.FRESH else ""
 CLEAN_ARG = "--clean-first" if Config.CLEAN else ""
 VERBOSE_ARG = "--verbose" if Config.VERBOSE else ""
+
+GLSLC = Path(Config.VULKAN_SDK) / "Bin" / "glslc.exe"
 
 def remove_build_folder():
     if os.path.exists(Config.BUILD_FOLDER):
@@ -85,6 +90,63 @@ def generate_project_files(action: Action, configuration: Configuration):
         print("Failed to generate project files.")
     os.chdir("..")
 
+def compile_shaders():
+    print("\n=== Compiling Shaders ===")
+
+    if not GLSLC.exists():
+        print(f" ERROR: glslc not found at {GLSLC}")
+        print(" Please set VULKAN_SDK environment variable correctly")
+        return False
+
+    games_dir = Path("Games")
+    if not games_dir.exists():
+        print("   Games folder not found, skipping shader compilation")
+        return True
+
+    success = True
+    for game_dir in games_dir.iterdir():
+        if not game_dir.is_dir():
+            continue
+        
+        shader_source = game_dir / "Resources" / "Shaders"
+        shader_output = Path("build") / "Games" / game_dir.name / "Binaries" / "Shaders"
+        
+        if not shader_source.exists():
+            print(f"{game_dir.name}: no Resources/Shaders folder, skipping")
+            continue
+        
+        print(f"Processing: {game_dir.name}")
+        
+        shader_output.mkdir(parents=True, exist_ok=True)
+        
+        shader_files = list(shader_source.glob("*.vert")) + list(shader_source.glob("*.frag"))
+        
+        if not shader_files:
+            print(f"No .vert or .frag files found")
+            continue
+        
+        for shader in shader_files:
+            output_file = shader_output / f"{shader.name}.spv"
+            print(f"Compiling: {shader.name} → {output_file}")
+            
+            try:
+                result = subprocess.run(
+                    [str(GLSLC), str(shader), "-o", str(output_file)],
+                    capture_output=True,
+                    text=True
+                )
+                if result.returncode != 0:
+                    print(f"ERROR: {result.stderr}")
+                    success = False
+                else:
+                    print(f"Compiling Done")
+            except Exception as e:
+                print(f"ERROR: {e}")
+                success = False
+    
+    print("\n" + ("All shaders compiled!" if success else " Some shaders failed to compile"))
+    return success
+    
 
 def build_project(action: Action, configuration: Configuration):
     if not os.path.exists(Config.BUILD_FOLDER):
@@ -154,6 +216,7 @@ if __name__ == "__main__":
         Action.GENERATE: lambda: generate_project_files(Action.GENERATE, selected_configuration),
         Action.BUILD: lambda: build_project(Action.BUILD, selected_configuration),
         Action.CLANG_FORMAT: lambda: run_clang_format(Config.SOURCE_DIR),
+        Action.COMPILE_SHADERS: compile_shaders,
     }
 
     # selected_action = args.action

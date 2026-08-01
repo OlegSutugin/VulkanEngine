@@ -32,6 +32,19 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set(CMAKE_SUPPRESS_REGENERATION  TRUE)  #deleting ZERO_CHECK project in IDE
 
 # Structure
+
+# ============================================
+# Engine Library
+# ============================================
 add_subdirectory(Engine)
-set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${ENGINE_EXE_TARGET})
+
+# ============================================
+# Games
+# ============================================
+add_subdirectory(Games/HelloTriangle)
+
+# ============================================
+# Startup Project
+# ============================================
+set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT HelloTriangle)
 

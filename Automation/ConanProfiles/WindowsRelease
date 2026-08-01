@@ -10,3 +10,4 @@ os=Windows
 
 [conf]
 tools.cmake.cmaketoolchain:generator=Ninja
+tools.microsoft.msbuild:installation_path=C:\Program Files\Microsoft Visual Studio\2022\Community
