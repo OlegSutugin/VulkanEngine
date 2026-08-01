@@ -2,6 +2,7 @@ import argparse
 import os
 import shutil
 import subprocess
+import platform
 from enum import Enum
 from pathlib import Path
 
@@ -38,7 +39,10 @@ FRESH_ARG = "--fresh" if Config.FRESH else ""
 CLEAN_ARG = "--clean-first" if Config.CLEAN else ""
 VERBOSE_ARG = "--verbose" if Config.VERBOSE else ""
 
-GLSLC = Path(Config.VULKAN_SDK) / "Bin" / "glslc.exe"
+if platform.system() == "Windows":
+    GLSLC = Path(Config.VULKAN_SDK) / "Bin" / "glslc.exe"
+else:
+    GLSLC = Path(Config.VULKAN_SDK) / "bin" / "glslc"
 
 def remove_build_folder():
     if os.path.exists(Config.BUILD_FOLDER):
@@ -90,7 +94,7 @@ def generate_project_files(action: Action, configuration: Configuration):
         print("Failed to generate project files.")
     os.chdir("..")
 
-def compile_shaders():
+def compile_shaders(configuration: Configuration):
     print("\n=== Compiling Shaders ===")
 
     if not GLSLC.exists():
@@ -107,28 +111,27 @@ def compile_shaders():
     for game_dir in games_dir.iterdir():
         if not game_dir.is_dir():
             continue
-        
+
         shader_source = game_dir / "Resources" / "Shaders"
-        shader_output = Path("build") / "Games" / game_dir.name / "Binaries" / "Shaders"
-        
+        shader_output = Path(Config.BUILD_FOLDER) / "bin" / configuration.value / "Binaries" / "Shaders"
+
         if not shader_source.exists():
             print(f"{game_dir.name}: no Resources/Shaders folder, skipping")
             continue
-        
+
         print(f"Processing: {game_dir.name}")
-        
         shader_output.mkdir(parents=True, exist_ok=True)
-        
+
         shader_files = list(shader_source.glob("*.vert")) + list(shader_source.glob("*.frag"))
-        
+
         if not shader_files:
             print(f"No .vert or .frag files found")
             continue
-        
+
         for shader in shader_files:
             output_file = shader_output / f"{shader.name}.spv"
-            print(f"Compiling: {shader.name} → {output_file}")
-            
+            print(f"Compiling: {shader.name} -> {output_file}")
+
             try:
                 result = subprocess.run(
                     [str(GLSLC), str(shader), "-o", str(output_file)],
@@ -143,7 +146,7 @@ def compile_shaders():
             except Exception as e:
                 print(f"ERROR: {e}")
                 success = False
-    
+
     print("\n" + ("All shaders compiled!" if success else " Some shaders failed to compile"))
     return success
     
@@ -156,17 +159,20 @@ def build_project(action: Action, configuration: Configuration):
         return
 
     os.chdir(Config.BUILD_FOLDER)
-    # command = get_cmake_command(
-    #     Action.BUILD_DEBUG
-    #     if configuration == Configuration.Debug
-    #     else Action.BUILD_RELEASE
-    # )
     command = get_cmake_command(action, configuration)
-    if run_command(command):
+    build_success = run_command(command)
+    os.chdir("..")
+
+    if build_success:
+        if not compile_shaders(configuration):
+            print("Warning: shader compilation failed")
+            return False
         print(f"Project built successfully in {configuration} mode.")
     else:
         print(f"Failed to build project in {configuration} mode.")
-    os.chdir("..")
+        return False
+
+    return True
 
 def get_source_files(source_dir, extensions, exclude_dirs=None):
     exclude_dirs = set(exclude_dirs or [])
@@ -200,9 +206,8 @@ if __name__ == "__main__":
     parser.add_argument(
         "action", type=Action, choices=list(Action), help="Action to perform"
     )
-    parser.add_argument(
-        "--configuration", type=Configuration, choices=list(Configuration), help="Build configuration"
-    )
+    
+    parser.add_argument("--configuration", type=Configuration, choices=list(Configuration), default=Configuration.Debug, help="Build configuration")
     args = parser.parse_args()
 
     selected_action = args.action
@@ -216,7 +221,7 @@ if __name__ == "__main__":
         Action.GENERATE: lambda: generate_project_files(Action.GENERATE, selected_configuration),
         Action.BUILD: lambda: build_project(Action.BUILD, selected_configuration),
         Action.CLANG_FORMAT: lambda: run_clang_format(Config.SOURCE_DIR),
-        Action.COMPILE_SHADERS: compile_shaders,
+        Action.COMPILE_SHADERS: lambda: compile_shaders(selected_configuration),
     }
 
     # selected_action = args.action

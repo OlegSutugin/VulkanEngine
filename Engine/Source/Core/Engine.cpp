@@ -14,7 +14,7 @@ Engine::Engine(const GameConfig& inConfig) : m_gameConfig(inConfig)
 
     m_windowManager = std::make_unique<GLFWWindowManager>();
     m_renderer = std::make_unique<VulkanRenderer>();
-    m_renderer->Init();
+    m_renderer->Init(m_gameConfig);
 
     m_windowManager->setOnWindowClosedCallback([this](WindowId id) { m_renderer->UnregisterWindow(id); });
 

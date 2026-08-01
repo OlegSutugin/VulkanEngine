@@ -9,6 +9,7 @@ set(ENGINE_SOURCE_FILES
 	Source/Core/Engine.h
 	Source/Core/Engine.cpp
 	Source/Core/Utility.h
+	Source/Core/GameConfig.h
 	
 	Source/Log/Log.h
 	Source/Log/Log.cpp

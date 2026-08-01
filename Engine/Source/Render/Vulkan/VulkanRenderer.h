@@ -1,6 +1,8 @@
 #pragma once
 #include "Render/IRenderer.h"
 #include <vulkan/vulkan.h>
+#include <vector>
+#include <unordered_map>
 #include <optional>
 
 namespace VulkanEngine
@@ -44,40 +46,58 @@ class VulkanRenderer final : public IRenderer
 {
 
 public:
-    virtual void Init() override;
+    virtual void Init(const GameConfig& config) override;
     virtual void RegisterWindow(int windowId, void* nativeWindowHandle) override;
     virtual void UnregisterWindow(int windowId) override;
     virtual void DrawFrame() override;
     virtual void Shutdown() override;
 
 private:
+#pragma region Instance & Device
     void CreateInstance();
-    VkSurfaceKHR CreateSurfaceForHandle(void* nativeWindowHandle) const;
     void PickPhysicalDevice(VkSurfaceKHR surfaceForPresentCheck);
     void CreateLogicalDevice();
+    void CreateCommandPool();
+#pragma endregion
+
+#pragma region Surface & Swapchain
+    VkSurfaceKHR CreateSurfaceForHandle(void* nativeWindowHandle) const;
     void CreateSwapchainForWindow(WindowRenderContext& context, uint32_t width, uint32_t height);
     void CreateImageViews(WindowRenderContext& context);
-    void DestroyWindowRenderContext(WindowRenderContext& context);
-    void CreateRenderPass(WindowRenderContext& context);
 
-    QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface) const;
-    bool IsDeviceSuitable(VkPhysicalDevice device, VkSurfaceKHR surface) const;
-    bool CheckDeviceExtensionSupport(VkPhysicalDevice device) const;
     SwapchainSupportDetails QuerySwapchainSupport(VkPhysicalDevice device, VkSurfaceKHR surface) const;
     VkSurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats) const;
     VkPresentModeKHR ChooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes) const;
     VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities, uint32_t width, uint32_t height) const;
+#pragma endregion
+
+#pragma region RenderPass & Pipeline
+    void CreateRenderPass(WindowRenderContext& context);
+    void CreateGraphicsPipeline(WindowRenderContext& context);
+    VkShaderModule CreateShaderModule(const std::vector<char>& code) const;
 
     static std::vector<char> ReadFile(const std::string& filename);
-    VkShaderModule CreateShaderModule(const std::vector<char>& code) const;
-    void CreateGraphicsPipeline(WindowRenderContext& context);
+#pragma endregion
 
+#pragma region Framebuffers
     void CreateFramebuffers(WindowRenderContext& context);
+#pragma endregion
 
-    void CreateCommandPool();
+#pragma region Commands & Synchronization
     void CreateCommandBuffers(WindowRenderContext& context);
     void CreateSyncObjects(WindowRenderContext& context);
     void RecordCommandBuffer(WindowRenderContext& context, VkCommandBuffer commandBuffer, uint32_t imageIndex);
+#pragma endregion
+
+#pragma region Queue Family Helpers
+    QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface) const;
+    bool IsDeviceSuitable(VkPhysicalDevice device, VkSurfaceKHR surface) const;
+    bool CheckDeviceExtensionSupport(VkPhysicalDevice device) const;
+#pragma endregion
+
+#pragma region Cleanup
+    void DestroyWindowRenderContext(WindowRenderContext& context);
+#pragma endregion
 
     VkInstance m_instance = VK_NULL_HANDLE;
     VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
@@ -90,6 +110,7 @@ private:
     bool m_deviceCreated = false;
 
     std::unordered_map<int, WindowRenderContext> m_windowContexts;
+    GameConfig m_gameConfig;
 };
 
 }  // namespace VulkanEngine

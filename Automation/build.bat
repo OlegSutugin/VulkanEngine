@@ -15,7 +15,7 @@ if "%~1"=="" (
 
 if "%~2"=="" (
     python Automation/automation.py %~1
-    exit /b 1
+    exit /b %errorlevel%
 )
 
 python Automation/automation.py %~1 --configuration %~2

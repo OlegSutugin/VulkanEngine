@@ -21,26 +21,38 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Install Vulkan SDK
+      shell: pwsh
+      run: |
+        curl -L https://sdk.lunarg.com/sdk/download/1.4.304.1/windows/VulkanSDK-1.4.304.1-Installer.exe -o VulkanSDK.exe
+        ./VulkanSDK.exe --accept-licenses --default-answer --confirm-command install
+        echo "VULKAN_SDK=C:/VulkanSDK/1.4.304.1" >> $env:GITHUB_ENV
+
     - name: Install Conan
       run: pip install conan
 
     - name: Setup MSVC Developer environment
       uses: ilammy/msvc-dev-cmd@v1
+      with:
+        arch: amd64
+
+    - name: Compile Shaders
+      run: |
+        python Automation/automation.py compile_shaders --configuration ${{matrix.configuration}}
+      env:
+        VULKAN_SDK: ${{ env.VULKAN_SDK }}
 
     - name: Configure CMake
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{matrix.configuration}}
+      run: |
+        cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{matrix.configuration}} -DCONAN_PROFILE_Windows_Debug=Automation/ConanProfiles/WindowsDebug -DCONAN_PROFILE_Windows_Release=Automation/ConanProfiles/WindowsRelease
+      env:
+        CONAN_MSVC_INSTALLATION_PATH: 'C:\Program Files\Microsoft Visual Studio\18\Enterprise'
 
     - name: Build
       run: cmake --build ${{github.workspace}}/build --config ${{matrix.configuration}} --target ${{env.TARGETS}}
-
-    - name: Archive Artifacts
-      run: Compress-Archive -Path build/bin/* -DestinationPath artifacts-${{matrix.configuration}}.zip
 
     - name: Upload Artifacts 
       uses: actions/upload-artifact@v4
       with:
          name: artifacts-${{matrix.configuration}}
          path: artifacts-${{matrix.configuration}}.zip
-    
-    
-    

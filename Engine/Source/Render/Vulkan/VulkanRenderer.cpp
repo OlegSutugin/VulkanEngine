@@ -18,8 +18,9 @@ namespace
 const std::vector<const char*> kRequiredDeviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 }
 
-void VulkanRenderer::Init()
+void VulkanRenderer::Init(const GameConfig& config)
 {
+    m_gameConfig = config;
     CreateInstance();
 }
 
@@ -69,6 +70,7 @@ void VulkanRenderer::UnregisterWindow(int windowId)
     m_windowContexts.erase(it);
 }
 
+#pragma region Instance & Device
 /** The instance is the connection between your application and the Vulkan library and creating it
  *  involves specifying some details about your application to the driver.
  */
@@ -103,21 +105,6 @@ void VulkanRenderer::CreateInstance()
     {
         VE_LOG(VulkanRenderLog, Critical, "Failed to create Vulkan Instance with code: {}", static_cast<uint32_t>(result));
     }
-}
-
-// using concrete window to render
-VkSurfaceKHR VulkanRenderer::CreateSurfaceForHandle(void* nativeWindowHandle) const
-{
-    VkSurfaceKHR surface = VK_NULL_HANDLE;
-    GLFWwindow* window = reinterpret_cast<GLFWwindow*>(nativeWindowHandle);
-
-    if (glfwCreateWindowSurface(m_instance, window, nullptr, &surface) != VK_SUCCESS)
-    {
-        VE_LOG(VulkanRenderLog, Error, "Failed to create window surface");
-        return VK_NULL_HANDLE;
-    }
-
-    return surface;
 }
 
 void VulkanRenderer::PickPhysicalDevice(VkSurfaceKHR surfaceForPresentCheck)
@@ -193,6 +180,36 @@ void VulkanRenderer::CreateLogicalDevice()
 
     vkGetDeviceQueue(m_device, m_queueFamilyIndices.graphicsFamily.value(), 0, &m_graphicsQueue);
     vkGetDeviceQueue(m_device, m_queueFamilyIndices.presentFamily.value(), 0, &m_presentQueue);
+}
+
+void VulkanRenderer::CreateCommandPool()
+{
+    VkCommandPoolCreateInfo poolInfo{};
+    poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+    poolInfo.queueFamilyIndex = m_queueFamilyIndices.graphicsFamily.value();
+
+    if (vkCreateCommandPool(m_device, &poolInfo, nullptr, &m_commandPool) != VK_SUCCESS)
+    {
+        VE_LOG(VulkanRenderLog, Error, "Failed to create command pool");
+    }
+}
+#pragma endregion
+
+#pragma region Surface & Swapchain
+// using concrete window to render
+VkSurfaceKHR VulkanRenderer::CreateSurfaceForHandle(void* nativeWindowHandle) const
+{
+    VkSurfaceKHR surface = VK_NULL_HANDLE;
+    GLFWwindow* window = reinterpret_cast<GLFWwindow*>(nativeWindowHandle);
+
+    if (glfwCreateWindowSurface(m_instance, window, nullptr, &surface) != VK_SUCCESS)
+    {
+        VE_LOG(VulkanRenderLog, Error, "Failed to create window surface");
+        return VK_NULL_HANDLE;
+    }
+
+    return surface;
 }
 
 void VulkanRenderer::CreateSwapchainForWindow(WindowRenderContext& context, uint32_t width, uint32_t height)
@@ -282,187 +299,6 @@ void VulkanRenderer::CreateImageViews(WindowRenderContext& context)
     }
 }
 
-void VulkanRenderer::DestroyWindowRenderContext(WindowRenderContext& context)
-{
-    if (context.imageAvailableSemaphore != VK_NULL_HANDLE) vkDestroySemaphore(m_device, context.imageAvailableSemaphore, nullptr);
-    if (context.renderFinishedSemaphore != VK_NULL_HANDLE) vkDestroySemaphore(m_device, context.renderFinishedSemaphore, nullptr);
-    if (context.inFlightFence != VK_NULL_HANDLE) vkDestroyFence(m_device, context.inFlightFence, nullptr);
-
-    for (auto framebuffer : context.swapchainFramebuffers)
-    {
-        vkDestroyFramebuffer(m_device, framebuffer, nullptr);
-    }
-    context.swapchainFramebuffers.clear();
-
-    for (auto imageView : context.swapchainImageViews)
-    {
-        vkDestroyImageView(m_device, imageView, nullptr);
-    }
-
-    context.swapchainImageViews.clear();
-
-    if (context.graphicsPipeline != VK_NULL_HANDLE)
-    {
-        vkDestroyPipeline(m_device, context.graphicsPipeline, nullptr);
-        context.graphicsPipeline = VK_NULL_HANDLE;
-    }
-
-    if (context.pipelineLayout != VK_NULL_HANDLE)
-    {
-        vkDestroyPipelineLayout(m_device, context.pipelineLayout, nullptr);
-        context.pipelineLayout = VK_NULL_HANDLE;
-    }
-
-    if (context.renderPass != VK_NULL_HANDLE)
-    {
-        vkDestroyRenderPass(m_device, context.renderPass, nullptr);
-        context.renderPass = VK_NULL_HANDLE;
-    }
-
-    if (context.swapchain != VK_NULL_HANDLE)
-    {
-        vkDestroySwapchainKHR(m_device, context.swapchain, nullptr);
-        context.swapchain = VK_NULL_HANDLE;
-    }
-
-    if (context.surface != VK_NULL_HANDLE)
-    {
-        vkDestroySurfaceKHR(m_instance, context.surface, nullptr);
-        context.surface = VK_NULL_HANDLE;
-    }
-}
-
-void VulkanRenderer::CreateRenderPass(WindowRenderContext& context)
-{
-    VkAttachmentDescription colorAttachment{};
-    colorAttachment.format = context.swapchainImageFormat;
-    colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-    colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-    VkAttachmentReference colorAttachmentRef{};
-    colorAttachmentRef.attachment = 0;
-    colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-    VkSubpassDescription subpass{};
-    subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    subpass.colorAttachmentCount = 1;
-    subpass.pColorAttachments = &colorAttachmentRef;
-
-    VkSubpassDependency dependency{};
-    dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-    dependency.dstSubpass = 0;
-    dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    dependency.srcAccessMask = 0;
-    dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-    VkRenderPassCreateInfo renderPassInfo{};
-    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    renderPassInfo.attachmentCount = 1;
-    renderPassInfo.pAttachments = &colorAttachment;
-    renderPassInfo.subpassCount = 1;
-    renderPassInfo.pSubpasses = &subpass;
-    renderPassInfo.dependencyCount = 1;
-    renderPassInfo.pDependencies = &dependency;
-
-    if (vkCreateRenderPass(m_device, &renderPassInfo, nullptr, &context.renderPass) != VK_SUCCESS)
-    {
-        VE_LOG(VulkanRenderLog, Error, "Failed to create render pass");
-    }
-}
-
-// we need to find QueueFamilies that allos us do whatever we want to do with Vulkan. QueueFamilyIndices uses std::optional which is great
-// (c++ 17)
-QueueFamilyIndices VulkanRenderer::FindQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface) const
-{
-    QueueFamilyIndices indices;
-
-    uint32_t queueFamilyCount = 0;
-    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
-
-    std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
-    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
-
-    // here we found first one that uses all we needed
-    for (uint32_t i = 0; i < queueFamilies.size(); ++i)
-    {
-        // all graphic commands (drawing, indexing drowing, drawing region)
-        if (queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
-        {
-            indices.graphicsFamily = i;
-        }
-
-        // we can show frame image, vsynk, working with swap chains
-        VkBool32 presentSupport = VK_FALSE;
-        vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
-        if (presentSupport)
-        {
-            indices.presentFamily = i;
-        }
-
-        if (indices.isComplete())
-        {
-            break;
-        }
-
-        /* Additional device opportunities
-         * queueFamilies[i].queueFlags & VK_QUEUE_COMPUTE_BIT - computations
-         * queueFamilies[i].queueFlags & VK_QUEUE_TRANSFER_BIT - transfering
-         */
-    }
-
-    return indices;
-}
-
-bool VulkanRenderer::IsDeviceSuitable(VkPhysicalDevice device, VkSurfaceKHR surface) const
-{
-    QueueFamilyIndices indices = FindQueueFamilies(device, surface);
-
-    bool extensionsSupported = CheckDeviceExtensionSupport(device);
-
-    bool swapchainAdequate = false;
-    if (extensionsSupported)
-    {
-        SwapchainSupportDetails swapchainSupport = QuerySwapchainSupport(device, surface);
-        swapchainAdequate = !swapchainSupport.formats.empty() && !swapchainSupport.presentModes.empty();
-    }
-
-    return indices.isComplete() && extensionsSupported && swapchainAdequate;
-}
-
-bool VulkanRenderer::CheckDeviceExtensionSupport(VkPhysicalDevice device) const
-{
-    uint32_t extensionCount = 0;
-    vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
-
-    std::vector<VkExtensionProperties> availableExtensions(extensionCount);
-    vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
-
-    std::set<std::string> requiredExtensions(kRequiredDeviceExtensions.begin(), kRequiredDeviceExtensions.end());
-
-    for (const auto& extension : availableExtensions)
-    {
-        requiredExtensions.erase(extension.extensionName);
-    }
-
-    /* availableExtensions
-     * "VK_KHR_swapchain"
-     * "VK_EXT_debug_utils"
-     * "VK_KHR_dedicated_allocation"
-     * etc..
-     */
-
-    // we had kRequiredDeviceExtensions and if requiredExtensions is empty that  - device is good and we can go further
-    // for now we use only one extension: VK_KHR_SWAPCHAIN_EXTENSION_NAME
-
-    return requiredExtensions.empty();
-}
-
 SwapchainSupportDetails VulkanRenderer::QuerySwapchainSupport(VkPhysicalDevice device, VkSurfaceKHR surface) const
 {
     SwapchainSupportDetails details;
@@ -527,48 +363,57 @@ VkExtent2D VulkanRenderer::ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capa
 
     return extent;
 }
+#pragma endregion
 
-std::vector<char> VulkanRenderer::ReadFile(const std::string& filename)
+#pragma region RenderPass & Pipeline
+void VulkanRenderer::CreateRenderPass(WindowRenderContext& context)
 {
-    std::ifstream file(filename, std::ios::ate | std::ios::binary);
+    VkAttachmentDescription colorAttachment{};
+    colorAttachment.format = context.swapchainImageFormat;
+    colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+    colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
-    if (!file.is_open())
+    VkAttachmentReference colorAttachmentRef{};
+    colorAttachmentRef.attachment = 0;
+    colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+    VkSubpassDescription subpass{};
+    subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    subpass.colorAttachmentCount = 1;
+    subpass.pColorAttachments = &colorAttachmentRef;
+
+    VkSubpassDependency dependency{};
+    dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+    dependency.dstSubpass = 0;
+    dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependency.srcAccessMask = 0;
+    dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+    VkRenderPassCreateInfo renderPassInfo{};
+    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+    renderPassInfo.attachmentCount = 1;
+    renderPassInfo.pAttachments = &colorAttachment;
+    renderPassInfo.subpassCount = 1;
+    renderPassInfo.pSubpasses = &subpass;
+    renderPassInfo.dependencyCount = 1;
+    renderPassInfo.pDependencies = &dependency;
+
+    if (vkCreateRenderPass(m_device, &renderPassInfo, nullptr, &context.renderPass) != VK_SUCCESS)
     {
-        VE_LOG(VulkanRenderLog, Error, "Failed to open file: {}", filename);
-        return {};
+        VE_LOG(VulkanRenderLog, Error, "Failed to create render pass");
     }
-
-    size_t fileSize = static_cast<size_t>(file.tellg());
-    std::vector<char> buffer(fileSize);
-
-    file.seekg(0);
-    file.read(buffer.data(), fileSize);
-    file.close();
-
-    return buffer;
-}
-
-VkShaderModule VulkanRenderer::CreateShaderModule(const std::vector<char>& code) const
-{
-    VkShaderModuleCreateInfo createInfo{};
-    createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    createInfo.codeSize = code.size();
-    createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
-
-    VkShaderModule shaderModule;
-    if (vkCreateShaderModule(m_device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS)
-    {
-        VE_LOG(VulkanRenderLog, Error, "Failed to create shader module");
-        return VK_NULL_HANDLE;
-    }
-
-    return shaderModule;
 }
 
 void VulkanRenderer::CreateGraphicsPipeline(WindowRenderContext& context)
 {
-    auto vertCode = ReadFile("E:/VulkanEngine/Engine/Source/Render/Vulkan/Shaders/Simple_Shader.vert.spv");
-    auto fragCode = ReadFile("E:/VulkanEngine/Engine/Source/Render/Vulkan/Shaders/Simple_Shader.frag.spv");
+    auto vertCode = ReadFile(m_gameConfig.shadersPath + m_gameConfig.pipeline.vertShader);
+    auto fragCode = ReadFile(m_gameConfig.shadersPath + m_gameConfig.pipeline.fragShader);
 
     VkShaderModule vertShaderModule = CreateShaderModule(vertCode);
     VkShaderModule fragShaderModule = CreateShaderModule(fragCode);
@@ -676,6 +521,45 @@ void VulkanRenderer::CreateGraphicsPipeline(WindowRenderContext& context)
     vkDestroyShaderModule(m_device, vertShaderModule, nullptr);
 }
 
+VkShaderModule VulkanRenderer::CreateShaderModule(const std::vector<char>& code) const
+{
+    VkShaderModuleCreateInfo createInfo{};
+    createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    createInfo.codeSize = code.size();
+    createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
+
+    VkShaderModule shaderModule;
+    if (vkCreateShaderModule(m_device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS)
+    {
+        VE_LOG(VulkanRenderLog, Error, "Failed to create shader module");
+        return VK_NULL_HANDLE;
+    }
+
+    return shaderModule;
+}
+
+std::vector<char> VulkanRenderer::ReadFile(const std::string& filename)
+{
+    std::ifstream file(filename, std::ios::ate | std::ios::binary);
+
+    if (!file.is_open())
+    {
+        VE_LOG(VulkanRenderLog, Error, "Failed to open file: {}", filename);
+        return {};
+    }
+
+    size_t fileSize = static_cast<size_t>(file.tellg());
+    std::vector<char> buffer(fileSize);
+
+    file.seekg(0);
+    file.read(buffer.data(), fileSize);
+    file.close();
+
+    return buffer;
+}
+#pragma endregion
+
+#pragma region Framebuffers
 void VulkanRenderer::CreateFramebuffers(WindowRenderContext& context)
 {
     context.swapchainFramebuffers.resize(context.swapchainImageViews.size());
@@ -699,20 +583,9 @@ void VulkanRenderer::CreateFramebuffers(WindowRenderContext& context)
         }
     }
 }
+#pragma endregion
 
-void VulkanRenderer::CreateCommandPool()
-{
-    VkCommandPoolCreateInfo poolInfo{};
-    poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-    poolInfo.queueFamilyIndex = m_queueFamilyIndices.graphicsFamily.value();
-
-    if (vkCreateCommandPool(m_device, &poolInfo, nullptr, &m_commandPool) != VK_SUCCESS)
-    {
-        VE_LOG(VulkanRenderLog, Error, "Failed to create command pool");
-    }
-}
-
+#pragma region Commands & Synchronization
 void VulkanRenderer::CreateCommandBuffers(WindowRenderContext& context)
 {
     context.commandBuffers.resize(context.swapchainFramebuffers.size());
@@ -781,6 +654,96 @@ void VulkanRenderer::RecordCommandBuffer(WindowRenderContext& context, VkCommand
         VE_LOG(VulkanRenderLog, Error, "Failed to record command buffer");
     }
 }
+#pragma endregion
+
+#pragma region Queue Family Helpers
+// we need to find QueueFamilies that allos us do whatever we want to do with Vulkan. QueueFamilyIndices uses std::optional which is great
+// (c++ 17)
+QueueFamilyIndices VulkanRenderer::FindQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface) const
+{
+    QueueFamilyIndices indices;
+
+    uint32_t queueFamilyCount = 0;
+    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+
+    std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
+
+    // here we found first one that uses all we needed
+    for (uint32_t i = 0; i < queueFamilies.size(); ++i)
+    {
+        // all graphic commands (drawing, indexing drowing, drawing region)
+        if (queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
+        {
+            indices.graphicsFamily = i;
+        }
+
+        // we can show frame image, vsynk, working with swap chains
+        VkBool32 presentSupport = VK_FALSE;
+        vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
+        if (presentSupport)
+        {
+            indices.presentFamily = i;
+        }
+
+        if (indices.isComplete())
+        {
+            break;
+        }
+
+        /* Additional device opportunities
+         * queueFamilies[i].queueFlags & VK_QUEUE_COMPUTE_BIT - computations
+         * queueFamilies[i].queueFlags & VK_QUEUE_TRANSFER_BIT - transfering
+         */
+    }
+
+    return indices;
+}
+
+bool VulkanRenderer::IsDeviceSuitable(VkPhysicalDevice device, VkSurfaceKHR surface) const
+{
+    QueueFamilyIndices indices = FindQueueFamilies(device, surface);
+
+    bool extensionsSupported = CheckDeviceExtensionSupport(device);
+
+    bool swapchainAdequate = false;
+    if (extensionsSupported)
+    {
+        SwapchainSupportDetails swapchainSupport = QuerySwapchainSupport(device, surface);
+        swapchainAdequate = !swapchainSupport.formats.empty() && !swapchainSupport.presentModes.empty();
+    }
+
+    return indices.isComplete() && extensionsSupported && swapchainAdequate;
+}
+
+bool VulkanRenderer::CheckDeviceExtensionSupport(VkPhysicalDevice device) const
+{
+    uint32_t extensionCount = 0;
+    vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
+
+    std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+    vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
+
+    std::set<std::string> requiredExtensions(kRequiredDeviceExtensions.begin(), kRequiredDeviceExtensions.end());
+
+    for (const auto& extension : availableExtensions)
+    {
+        requiredExtensions.erase(extension.extensionName);
+    }
+
+    /* availableExtensions
+     * "VK_KHR_swapchain"
+     * "VK_EXT_debug_utils"
+     * "VK_KHR_dedicated_allocation"
+     * etc..
+     */
+
+    // we had kRequiredDeviceExtensions and if requiredExtensions is empty that  - device is good and we can go further
+    // for now we use only one extension: VK_KHR_SWAPCHAIN_EXTENSION_NAME
+
+    return requiredExtensions.empty();
+}
+#pragma endregion
 
 void VulkanRenderer::DrawFrame()
 {
@@ -865,3 +828,55 @@ void VulkanRenderer::Shutdown()
         m_instance = VK_NULL_HANDLE;
     }
 }
+
+#pragma region Cleanup
+void VulkanRenderer::DestroyWindowRenderContext(WindowRenderContext& context)
+{
+    if (context.imageAvailableSemaphore != VK_NULL_HANDLE) vkDestroySemaphore(m_device, context.imageAvailableSemaphore, nullptr);
+    if (context.renderFinishedSemaphore != VK_NULL_HANDLE) vkDestroySemaphore(m_device, context.renderFinishedSemaphore, nullptr);
+    if (context.inFlightFence != VK_NULL_HANDLE) vkDestroyFence(m_device, context.inFlightFence, nullptr);
+
+    for (auto framebuffer : context.swapchainFramebuffers)
+    {
+        vkDestroyFramebuffer(m_device, framebuffer, nullptr);
+    }
+    context.swapchainFramebuffers.clear();
+
+    for (auto imageView : context.swapchainImageViews)
+    {
+        vkDestroyImageView(m_device, imageView, nullptr);
+    }
+
+    context.swapchainImageViews.clear();
+
+    if (context.graphicsPipeline != VK_NULL_HANDLE)
+    {
+        vkDestroyPipeline(m_device, context.graphicsPipeline, nullptr);
+        context.graphicsPipeline = VK_NULL_HANDLE;
+    }
+
+    if (context.pipelineLayout != VK_NULL_HANDLE)
+    {
+        vkDestroyPipelineLayout(m_device, context.pipelineLayout, nullptr);
+        context.pipelineLayout = VK_NULL_HANDLE;
+    }
+
+    if (context.renderPass != VK_NULL_HANDLE)
+    {
+        vkDestroyRenderPass(m_device, context.renderPass, nullptr);
+        context.renderPass = VK_NULL_HANDLE;
+    }
+
+    if (context.swapchain != VK_NULL_HANDLE)
+    {
+        vkDestroySwapchainKHR(m_device, context.swapchain, nullptr);
+        context.swapchain = VK_NULL_HANDLE;
+    }
+
+    if (context.surface != VK_NULL_HANDLE)
+    {
+        vkDestroySurfaceKHR(m_instance, context.surface, nullptr);
+        context.surface = VK_NULL_HANDLE;
+    }
+}
+#pragma endregion

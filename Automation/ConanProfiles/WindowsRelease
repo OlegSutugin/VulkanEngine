@@ -1,13 +1,15 @@
 [settings]
 arch=x86_64
-build_type=Release
+build_type=Debug
 compiler=msvc
 compiler.cppstd=20
 compiler.runtime=dynamic
-compiler.runtime_type=Release
+compiler.runtime_type=Debug
 compiler.version=194
 os=Windows
 
 [conf]
 tools.cmake.cmaketoolchain:generator=Ninja
-tools.microsoft.msbuild:installation_path=C:\Program Files\Microsoft Visual Studio\2022\Community
+{% if os.getenv("CONAN_MSVC_INSTALLATION_PATH") %}
+tools.microsoft.msbuild:installation_path={{ os.getenv("CONAN_MSVC_INSTALLATION_PATH") }}
+{% endif %}

@@ -2,19 +2,12 @@
 
 #include <memory>
 #include <string>
+#include "GameConfig.h"
 
 namespace VulkanEngine
 {
 class GLFWWindowManager;
 class IRenderer;
-
-struct GameConfig
-{
-    std::string shadersPath{};
-    uint32_t windowWidth = 1920;
-    uint32_t windowHeight = 1080;
-    std::string windowTitle = "VulkanEngine";
-};
 
 class Engine final
 {

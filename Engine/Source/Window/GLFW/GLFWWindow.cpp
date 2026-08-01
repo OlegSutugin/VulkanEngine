@@ -1,7 +1,6 @@
 #include "GLFWWindow.h"
 #include "Log/Log.h"
 #include "GLFW/glfw3.h"
-#include <string>
 
 using namespace VulkanEngine;
 
