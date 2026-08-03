@@ -15,8 +15,11 @@ set(ENGINE_SOURCE_FILES
 	Source/Log/Log.cpp
 
 	Source/Render/IRenderer.h
+	Source/Render/Vertex.h
 	Source/Render/Vulkan/VulkanRenderer.h
 	Source/Render/Vulkan/VulkanRenderer.cpp
+	Source/Render/Vulkan/VulkanVertexLayout.h
+	Source/Render/Vulkan/VulkanVertexLayout.cpp
 
 	Source/Window/GLFW/GLFWWindow.h
 	Source/Window/GLFW/GLFWWindow.cpp
@@ -37,6 +40,9 @@ include_directories(ThirdParty/glfw-3.4/include)
 set_property(TARGET glfw PROPERTY FOLDER thirdparty/GLFW3)
 set_property(TARGET uninstall PROPERTY FOLDER thirdparty/GLFW3)
 set_property(TARGET update_mappings PROPERTY FOLDER thirdparty/GLFW3)
+
+# Add glm algebra library
+target_include_directories(${PROJECT_NAME}Lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/glm)
 
 # Add conan libs
 find_package(spdlog REQUIRED)

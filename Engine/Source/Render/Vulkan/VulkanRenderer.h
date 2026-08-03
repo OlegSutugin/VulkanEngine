@@ -1,6 +1,7 @@
 #pragma once
 #include "Render/IRenderer.h"
 #include <vulkan/vulkan.h>
+#include <array>
 #include <vector>
 #include <unordered_map>
 #include <optional>
@@ -52,9 +53,17 @@ struct WindowRenderContext
     uint32_t newHeight = 1;
 };
 
+struct GpuMesh
+{
+    VkBuffer vertexBuffer = VK_NULL_HANDLE;
+    VkDeviceMemory vertexBufferMemory = VK_NULL_HANDLE;
+    VkBuffer indexBuffer = VK_NULL_HANDLE;
+    VkDeviceMemory indexBufferMemory = VK_NULL_HANDLE;
+    uint32_t indexCount = 0;
+};
+
 class VulkanRenderer final : public IRenderer
 {
-
 public:
     virtual void Init(const GameConfig& config) override;
     virtual void RegisterWindow(int windowId, void* nativeWindowHandle) override;
@@ -97,6 +106,14 @@ private:
     void CreateFramebuffers(WindowRenderContext& context);
 #pragma endregion
 
+#pragma region Vertex & Index buffers
+    void CreateMeshBuffers();
+    void CreateBuffer(
+        VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
+    void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+    uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+#pragma endregion
+
 #pragma region Commands & Synchronization
     void CreateCommandBuffers(WindowRenderContext& context);
     void CreateSyncObjects(WindowRenderContext& context);
@@ -124,7 +141,12 @@ private:
     bool m_deviceCreated = false;
 
     std::unordered_map<int, WindowRenderContext> m_windowContexts;
+    std::vector<GpuMesh> m_meshes;
+
     GameConfig m_gameConfig;
+
+    template <typename T>
+    void CreateDeviceLocalBuffer(const std::vector<T>& data, VkBufferUsageFlagBits usage, VkBuffer& outBuffer, VkDeviceMemory& outMemory);
 };
 
 }  // namespace VulkanEngine

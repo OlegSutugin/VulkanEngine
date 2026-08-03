@@ -3,6 +3,8 @@
 #include <format>
 #include <string>
 #include <string_view>
+#include <array>
+#include <cstring>
 #include <vector>
 #include <set>
 #include <memory>
