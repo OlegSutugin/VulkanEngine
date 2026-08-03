@@ -19,7 +19,7 @@ GLFWWindowManager::GLFWWindowManager()
     }
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
     m_initialized = true;
     VE_LOG(LogGLFWWindowManager, Display, "GLFW initialized successfully!");
@@ -44,6 +44,7 @@ void GLFWWindowManager::update()
     if (!m_initialized) return;
 
     glfwPollEvents();
+
     cleanupClosedWindows();
 }
 
@@ -64,6 +65,14 @@ std::expected<WindowId, WindowCreationError> GLFWWindowManager::createWindow(con
 
     const WindowId id = m_windowIdCounter++;
     m_windows[id] = window;
+
+    window->m_onWindowResizedCallback = [this, id](int newWidth, int newHeight)
+    {
+        if (m_onWindowResizedCallback)
+        {
+            m_onWindowResizedCallback(id, newWidth, newHeight);
+        }
+    };
 
     VE_LOG(LogGLFWWindowManager, Display, "Added window with id: {}", id);
 
@@ -105,4 +114,9 @@ void GLFWWindowManager::cleanupClosedWindows()
 void GLFWWindowManager::setOnWindowClosedCallback(std::function<void(WindowId)> callback)
 {
     m_onWindowClosedCallback = std::move(callback);
+}
+
+void GLFWWindowManager::setOnWindowResizedCallback(std::function<void(WindowId, int, int)> callback)
+{
+    m_onWindowResizedCallback = std::move(callback);
 }

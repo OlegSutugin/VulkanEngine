@@ -6,6 +6,18 @@ using namespace VulkanEngine;
 
 DEFINE_LOG_CATEGORY_STATIC(LogGLFWWindow);
 
+namespace
+{
+void GLFWSizeCallback(GLFWwindow* window, int width, int height)
+{
+    auto* self = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(window));
+    if (self && self->m_onWindowResizedCallback)
+    {
+        self->m_onWindowResizedCallback(width, height);
+    }
+}
+}  // namespace
+
 GLFWWindow::GLFWWindow(const WindowSettings& settings)
 {
     m_window = glfwCreateWindow(settings.width, settings.height, settings.title.c_str(), nullptr, nullptr);
@@ -17,12 +29,17 @@ GLFWWindow::GLFWWindow(const WindowSettings& settings)
     }
 
     glfwSetWindowPos(m_window, settings.x_Pos, settings.y_Pos);
+
+    glfwSetWindowUserPointer(m_window, this);
+    glfwSetWindowSizeCallback(m_window, GLFWSizeCallback);
 }
 
 GLFWWindow::~GLFWWindow()
 {
     if (m_window)
     {
+        glfwSetWindowUserPointer(m_window, nullptr);
+        glfwSetWindowSizeCallback(m_window, nullptr);
         glfwDestroyWindow(m_window);
         m_window = nullptr;
     }
@@ -46,7 +63,7 @@ bool GLFWWindow::shouldClose() const
     return glfwWindowShouldClose(m_window);
 }
 
-GLFWwindow* VulkanEngine::GLFWWindow::getNativeHandle()
+GLFWwindow* GLFWWindow::getNativeHandle()
 {
     return m_window;
 }

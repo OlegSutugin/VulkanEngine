@@ -5,6 +5,9 @@
 #include <unordered_map>
 #include <optional>
 
+#define GLFW_INCLUDE_VULKAN
+#include <GLFW/glfw3.h>
+
 namespace VulkanEngine
 {
 
@@ -26,6 +29,8 @@ struct SwapchainSupportDetails
 
 struct WindowRenderContext
 {
+    GLFWwindow* nativeWindowHandle{nullptr};
+
     VkSurfaceKHR surface = VK_NULL_HANDLE;
     VkSwapchainKHR swapchain = VK_NULL_HANDLE;
     VkRenderPass renderPass = VK_NULL_HANDLE;
@@ -40,6 +45,11 @@ struct WindowRenderContext
     std::vector<VkCommandBuffer> commandBuffers;
     VkFormat swapchainImageFormat = VK_FORMAT_UNDEFINED;
     VkExtent2D swapchainExtent{};
+
+    // resized flags
+    bool framebufferResized = false;
+    uint32_t newWidth = 1;
+    uint32_t newHeight = 1;
 };
 
 class VulkanRenderer final : public IRenderer
@@ -51,6 +61,7 @@ public:
     virtual void UnregisterWindow(int windowId) override;
     virtual void DrawFrame() override;
     virtual void Shutdown() override;
+    virtual void WindowWasResized(int id, int newWidth, int newHeight) override;
 
 private:
 #pragma region Instance & Device
@@ -62,13 +73,16 @@ private:
 
 #pragma region Surface & Swapchain
     VkSurfaceKHR CreateSurfaceForHandle(void* nativeWindowHandle) const;
-    void CreateSwapchainForWindow(WindowRenderContext& context, uint32_t width, uint32_t height);
+    void CreateSwapchainForWindow(
+        WindowRenderContext& context, uint32_t width, uint32_t height, VkSwapchainKHR oldSwapchain = VK_NULL_HANDLE);
     void CreateImageViews(WindowRenderContext& context);
 
     SwapchainSupportDetails QuerySwapchainSupport(VkPhysicalDevice device, VkSurfaceKHR surface) const;
     VkSurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats) const;
     VkPresentModeKHR ChooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes) const;
     VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities, uint32_t width, uint32_t height) const;
+
+    void RecreateSwapChainForWindow(WindowRenderContext& context, uint32_t newWidth, uint32_t newHeight);
 #pragma endregion
 
 #pragma region RenderPass & Pipeline

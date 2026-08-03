@@ -2,16 +2,15 @@
 #include "pch.h"
 #include <fstream>
 #include <set>
+#include <unordered_map>
 #include <algorithm>
 #include <limits>
 #include "Log/Log.h"
 
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
-
 using namespace VulkanEngine;
 
 DEFINE_LOG_CATEGORY_STATIC(VulkanRenderLog)
+DEFINE_LOG_CATEGORY_STATIC(VulkanRenderDebugLog)
 
 namespace
 {
@@ -42,6 +41,7 @@ void VulkanRenderer::RegisterWindow(int windowId, void* nativeWindowHandle)
 
     WindowRenderContext context;
     context.surface = surface;
+    context.nativeWindowHandle = reinterpret_cast<GLFWwindow*>(nativeWindowHandle);
 
     int width = 0;
     int height = 0;
@@ -212,7 +212,7 @@ VkSurfaceKHR VulkanRenderer::CreateSurfaceForHandle(void* nativeWindowHandle) co
     return surface;
 }
 
-void VulkanRenderer::CreateSwapchainForWindow(WindowRenderContext& context, uint32_t width, uint32_t height)
+void VulkanRenderer::CreateSwapchainForWindow(WindowRenderContext& context, uint32_t width, uint32_t height, VkSwapchainKHR oldSwapchain)
 {
     SwapchainSupportDetails support = QuerySwapchainSupport(m_physicalDevice, context.surface);
 
@@ -253,7 +253,7 @@ void VulkanRenderer::CreateSwapchainForWindow(WindowRenderContext& context, uint
     createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
     createInfo.presentMode = presentMode;
     createInfo.clipped = VK_TRUE;
-    createInfo.oldSwapchain = VK_NULL_HANDLE;
+    createInfo.oldSwapchain = oldSwapchain;
 
     if (vkCreateSwapchainKHR(m_device, &createInfo, nullptr, &context.swapchain) != VK_SUCCESS)
     {
@@ -363,6 +363,39 @@ VkExtent2D VulkanRenderer::ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capa
 
     return extent;
 }
+
+void VulkanRenderer::RecreateSwapChainForWindow(WindowRenderContext& context, uint32_t newWidth, uint32_t newHeight)
+{
+    // waiting
+    vkDeviceWaitIdle(m_device);
+
+    // clearing
+    for (auto framebuffer : context.swapchainFramebuffers)
+    {
+        vkDestroyFramebuffer(m_device, framebuffer, nullptr);
+    }
+    context.swapchainFramebuffers.clear();
+
+    for (auto imageView : context.swapchainImageViews)
+    {
+        vkDestroyImageView(m_device, imageView, nullptr);
+    }
+
+    context.swapchainImageViews.clear();
+
+    VkSwapchainKHR oldSwapchain = context.swapchain;
+    CreateSwapchainForWindow(context, newWidth, newHeight, oldSwapchain);
+
+    if (oldSwapchain != VK_NULL_HANDLE)
+    {
+        vkDestroySwapchainKHR(m_device, oldSwapchain, nullptr);
+    }
+
+    // recreating
+    CreateImageViews(context);
+    CreateFramebuffers(context);
+}
+
 #pragma endregion
 
 #pragma region RenderPass & Pipeline
@@ -442,24 +475,18 @@ void VulkanRenderer::CreateGraphicsPipeline(WindowRenderContext& context)
     inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
     inputAssembly.primitiveRestartEnable = VK_FALSE;
 
-    VkViewport viewport{};
-    viewport.x = 0.0f;
-    viewport.y = 0.0f;
-    viewport.width = static_cast<float>(context.swapchainExtent.width);
-    viewport.height = static_cast<float>(context.swapchainExtent.height);
-    viewport.minDepth = 0.0f;
-    viewport.maxDepth = 1.0f;
-
-    VkRect2D scissor{};
-    scissor.offset = {0, 0};
-    scissor.extent = context.swapchainExtent;
+    std::vector<VkDynamicState> dynamicStates = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
+    VkPipelineDynamicStateCreateInfo dynamicStateInfo{};
+    dynamicStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+    dynamicStateInfo.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
+    dynamicStateInfo.pDynamicStates = dynamicStates.data();
 
     VkPipelineViewportStateCreateInfo viewportState{};
     viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
     viewportState.viewportCount = 1;
-    viewportState.pViewports = &viewport;
+    viewportState.pViewports = nullptr;
     viewportState.scissorCount = 1;
-    viewportState.pScissors = &scissor;
+    viewportState.pScissors = nullptr;
 
     VkPipelineRasterizationStateCreateInfo rasterizer{};
     rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
@@ -500,6 +527,7 @@ void VulkanRenderer::CreateGraphicsPipeline(WindowRenderContext& context)
     VkGraphicsPipelineCreateInfo pipelineInfo{};
     pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
     pipelineInfo.stageCount = 2;
+    pipelineInfo.pDynamicState = &dynamicStateInfo;
     pipelineInfo.pStages = shaderStages;
     pipelineInfo.pVertexInputState = &vertexInputInfo;
     pipelineInfo.pInputAssemblyState = &inputAssembly;
@@ -645,6 +673,21 @@ void VulkanRenderer::RecordCommandBuffer(WindowRenderContext& context, VkCommand
 
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, context.graphicsPipeline);
 
+    VkViewport viewport{};
+    viewport.x = 0.0f;
+    viewport.y = 0.0f;
+    viewport.width = static_cast<float>(context.swapchainExtent.width);
+    viewport.height = static_cast<float>(context.swapchainExtent.height);
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+
+    VkRect2D scissor{};
+    scissor.offset = {0, 0};
+    scissor.extent = context.swapchainExtent;
+
+    vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+    vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+
     vkCmdDraw(commandBuffer, 3, 1, 0, 0);
 
     vkCmdEndRenderPass(commandBuffer);
@@ -751,9 +794,30 @@ void VulkanRenderer::DrawFrame()
     {
         vkWaitForFences(m_device, 1, &context.inFlightFence, VK_TRUE, UINT64_MAX);
 
+        // pass this window draw om that frame
+        if (context.framebufferResized)
+        {
+            if (context.newWidth == 0 || context.newHeight == 0)
+            {
+                continue;
+            }
+            RecreateSwapChainForWindow(context, context.newWidth, context.newHeight);
+            context.framebufferResized = false;
+            continue;
+        }
+
         uint32_t imageIndex;
         VkResult result =
             vkAcquireNextImageKHR(m_device, context.swapchain, UINT64_MAX, context.imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
+
+        if (result == VK_ERROR_OUT_OF_DATE_KHR)
+        {
+            // actually we can reach to here but doesn't store actual numbers for width and height - so we'll fill them manually
+            int width, height;
+            glfwGetFramebufferSize(context.nativeWindowHandle, &width, &height);
+            RecreateSwapChainForWindow(context, width, height);
+            continue;
+        }
 
         if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
         {
@@ -796,7 +860,20 @@ void VulkanRenderer::DrawFrame()
         presentInfo.pSwapchains = swapchains;
         presentInfo.pImageIndices = &imageIndex;
 
-        vkQueuePresentKHR(m_presentQueue, &presentInfo);
+        VkResult presentResult = vkQueuePresentKHR(m_presentQueue, &presentInfo);
+
+        if (presentResult == VK_ERROR_OUT_OF_DATE_KHR || presentResult == VK_SUBOPTIMAL_KHR)
+        {
+            // actually we can reach to here but doesn't store actual numbers for width and height - so we'll fill them manually
+            int width, height;
+            glfwGetFramebufferSize(context.nativeWindowHandle, &width, &height);
+            RecreateSwapChainForWindow(context, width, height);
+            continue;
+        }
+        else if (presentResult != VK_SUCCESS)
+        {
+            VE_LOG(VulkanRenderLog, Error, "Failed to present");
+        }
     }
 }
 
@@ -826,6 +903,20 @@ void VulkanRenderer::Shutdown()
     {
         vkDestroyInstance(m_instance, nullptr);
         m_instance = VK_NULL_HANDLE;
+    }
+}
+
+void VulkanRenderer::WindowWasResized(int id, int newWidth, int newHeight)
+{
+    if (m_windowContexts.contains(id))
+    {
+        m_windowContexts[id].framebufferResized = true;
+        m_windowContexts[id].newWidth = newWidth;
+        m_windowContexts[id].newHeight = newHeight;
+    }
+    else
+    {
+        VE_LOG(VulkanRenderLog, Warning, "Window was resized, but render doesn't store that id");
     }
 }
 

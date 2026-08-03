@@ -25,12 +25,14 @@ public:
     void cleanupClosedWindows();
 
     void setOnWindowClosedCallback(std::function<void(WindowId)> callback);
+    void setOnWindowResizedCallback(std::function<void(WindowId, int, int)> callback);
 
 private:
     bool m_initialized{false};
     std::unordered_map<WindowId, std::shared_ptr<GLFWWindow>> m_windows;
     int m_windowIdCounter{1};
     std::function<void(WindowId)> m_onWindowClosedCallback;
+    std::function<void(WindowId, int, int)> m_onWindowResizedCallback;
 };
 
 }  // namespace VulkanEngine

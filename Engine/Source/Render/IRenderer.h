@@ -14,5 +14,6 @@ public:
     virtual void UnregisterWindow(int windowId) = 0;
     virtual void DrawFrame() = 0;
     virtual void Shutdown() = 0;
+    virtual void WindowWasResized(int id, int newWidth, int newHeight) = 0;
 };
 }  // namespace VulkanEngine

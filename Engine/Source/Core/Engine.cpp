@@ -17,6 +17,14 @@ Engine::Engine(const GameConfig& inConfig) : m_gameConfig(inConfig)
     m_renderer->Init(m_gameConfig);
 
     m_windowManager->setOnWindowClosedCallback([this](WindowId id) { m_renderer->UnregisterWindow(id); });
+    m_windowManager->setOnWindowResizedCallback(
+        [this](int id, int newWidth, int newHeight)
+        {
+            if (m_renderer)
+            {
+                m_renderer->WindowWasResized(id, newWidth, newHeight);
+            }
+        });
 
     const auto windowCreationResult = m_windowManager->createWindow(WindowSettings{});
     if (!windowCreationResult)

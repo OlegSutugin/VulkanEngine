@@ -113,14 +113,20 @@ def compile_shaders(configuration: Configuration):
             continue
 
         shader_source = game_dir / "Resources" / "Shaders"
-        shader_output = Path(Config.BUILD_FOLDER) / "bin" / configuration.value / "Binaries" / "Shaders"
+
+        # ci + build
+        primary_output = Path(Config.BUILD_FOLDER) / "bin" / configuration.value / "Binaries" / "Shaders"
+        # for local IDE working
+        legacy_output = Path(Config.BUILD_FOLDER) / "Games" / game_dir.name / "Binaries" / "Shaders"
 
         if not shader_source.exists():
             print(f"{game_dir.name}: no Resources/Shaders folder, skipping")
             continue
 
         print(f"Processing: {game_dir.name}")
-        shader_output.mkdir(parents=True, exist_ok=True)
+
+        primary_output.mkdir(parents=True, exist_ok=True)
+        legacy_output.mkdir(parents=True, exist_ok=True)
 
         shader_files = list(shader_source.glob("*.vert")) + list(shader_source.glob("*.frag"))
 
@@ -129,20 +135,26 @@ def compile_shaders(configuration: Configuration):
             continue
 
         for shader in shader_files:
-            output_file = shader_output / f"{shader.name}.spv"
-            print(f"Compiling: {shader.name} -> {output_file}")
+            primary_file = primary_output / f"{shader.name}.spv"
+            print(f"Compiling: {shader.name} -> {primary_file}")
 
             try:
                 result = subprocess.run(
-                    [str(GLSLC), str(shader), "-o", str(output_file)],
+                    [str(GLSLC), str(shader), "-o", str(primary_file)],
                     capture_output=True,
                     text=True
                 )
                 if result.returncode != 0:
                     print(f"ERROR: {result.stderr}")
                     success = False
-                else:
-                    print(f"Compiling Done")
+                    continue
+
+                print(f"Compiling Done")
+
+                # for IDE
+                legacy_file = legacy_output / f"{shader.name}.spv"
+                shutil.copy2(primary_file, legacy_file)
+
             except Exception as e:
                 print(f"ERROR: {e}")
                 success = False

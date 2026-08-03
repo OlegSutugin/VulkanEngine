@@ -1,5 +1,6 @@
 #pragma once
 #include <unordered_map>
+#include <functional>
 #include <string>
 
 #define GLFW_INCLUDE_VULKAN
@@ -29,6 +30,7 @@ public:
     bool isValid() const;
     bool shouldClose() const;
     GLFWwindow* getNativeHandle();
+    std::function<void(int newWidth, int newHeight)> m_onWindowResizedCallback;
 
 private:
     GLFWwindow* m_window{nullptr};
