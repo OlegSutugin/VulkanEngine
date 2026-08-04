@@ -70,7 +70,7 @@ int main()
     auto lastTime = std::chrono::steady_clock::now();
 
     /*game*/
-    const int MaxGeneratedLayers = 7;
+    const int MaxGeneratedLayers = 6;
     float timebetweengenerations = 1.f;
     int CurrentLayer = 0;
 
@@ -84,17 +84,22 @@ int main()
         timebetweengenerations -= deltaTime;
         if (timebetweengenerations < 0)
         {
-            if (CurrentLayer > MaxGeneratedLayers) break;
-
             timebetweengenerations = 1.f;
-            CurrentLayer++;
+
+            if (CurrentLayer > MaxGeneratedLayers)
+            {
+                CurrentLayer = 0;
+            }
+            else
+            {
+                CurrentLayer++;
+            }
 
             engine.DestroyMesh(currentMeshHandle);
             currentMeshHandle = engine.CreateMesh(BuildSierpinskiMesh(vertices[0], vertices[1], vertices[2], CurrentLayer));
         }
 
         engine.Tick(deltaTime);
-
     }
 
     return 0;

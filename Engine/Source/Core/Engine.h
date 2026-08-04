@@ -20,7 +20,7 @@ public:
     void Tick(float deltaTime);
     bool isRunning() const;
 
-    //meshes temp
+    // meshes temp
     MeshHandle CreateMesh(const MeshDesc& desc);
     void DestroyMesh(MeshHandle handle);
 

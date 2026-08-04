@@ -57,7 +57,7 @@ Engine::Engine(const GameConfig& inConfig) : m_gameConfig(inConfig)
 
 Engine::~Engine() = default;
 
-void Engine::Tick(float deltaTime) 
+void Engine::Tick(float deltaTime)
 {
     if (m_windowManager->areAllWindowsClosed())
     {
@@ -92,7 +92,7 @@ void Engine::DestroyMesh(MeshHandle handle)
     }
 }
 
-void Engine::EngineStop() 
+void Engine::EngineStop()
 {
     m_renderer->Shutdown();
     m_initialized = false;

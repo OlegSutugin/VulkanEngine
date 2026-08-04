@@ -35,15 +35,18 @@ struct WindowRenderContext
     VkSurfaceKHR surface = VK_NULL_HANDLE;
     VkSwapchainKHR swapchain = VK_NULL_HANDLE;
     VkRenderPass renderPass = VK_NULL_HANDLE;
+    VkDescriptorSetLayout descriptorSetLayout = VK_NULL_HANDLE;
     VkPipelineLayout pipelineLayout = VK_NULL_HANDLE;
     VkPipeline graphicsPipeline = VK_NULL_HANDLE;
     VkSemaphore imageAvailableSemaphore = VK_NULL_HANDLE;
     VkSemaphore renderFinishedSemaphore = VK_NULL_HANDLE;
     VkFence inFlightFence = VK_NULL_HANDLE;
-    std::vector<VkImage> swapchainImages;
-    std::vector<VkImageView> swapchainImageViews;
-    std::vector<VkFramebuffer> swapchainFramebuffers;
-    std::vector<VkCommandBuffer> commandBuffers;
+    VkDescriptorPool descriptorPool = VK_NULL_HANDLE;
+    std::vector<VkImage> swapchainImages{};
+    std::vector<VkImageView> swapchainImageViews{};
+    std::vector<VkFramebuffer> swapchainFramebuffers{};
+    std::vector<VkCommandBuffer> commandBuffers{};
+    std::vector<VkDescriptorSet> descriptorSets{};
     VkFormat swapchainImageFormat = VK_FORMAT_UNDEFINED;
     VkExtent2D swapchainExtent{};
 
@@ -51,6 +54,10 @@ struct WindowRenderContext
     bool framebufferResized = false;
     uint32_t newWidth = 1;
     uint32_t newHeight = 1;
+
+    std::vector<VkBuffer> uniformBuffers{};
+    std::vector<VkDeviceMemory> uniformBuffersMemory{};
+    std::vector<void*> uniformBuffersMapped{};
 };
 
 struct GpuMesh
@@ -105,11 +112,19 @@ private:
     static std::vector<char> ReadFile(const std::string& filename);
 #pragma endregion
 
+#pragma region Descriptor
+    void CreateDescriptorSetLayout(WindowRenderContext& context);
+    void CreateDescriptorPool(WindowRenderContext& context);
+    void CreateDescriptorSets(WindowRenderContext& context);
+#pragma endregion
+
 #pragma region Framebuffers
     void CreateFramebuffers(WindowRenderContext& context);
 #pragma endregion
 
-#pragma region Vertex & Index buffers
+#pragma region Vertex & Index & Uniform buffers
+    void CreateUniformBuffers(WindowRenderContext& context);
+    void UpdateUniformBuffer(WindowRenderContext& context);
     void CreateBuffer(
         VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
     void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
