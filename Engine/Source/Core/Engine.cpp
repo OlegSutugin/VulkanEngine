@@ -57,19 +57,43 @@ Engine::Engine(const GameConfig& inConfig) : m_gameConfig(inConfig)
 
 Engine::~Engine() = default;
 
-void Engine::run()
+void Engine::Tick(float deltaTime) 
 {
-    if (!m_initialized)
+    if (m_windowManager->areAllWindowsClosed())
     {
-        VE_LOG(LogEngine, Error, "Cannot run: Vulkan engine is not initialized...");
+        EngineStop();
         return;
     }
 
-    while (!m_windowManager->areAllWindowsClosed())
-    {
-        m_windowManager->update();
-        m_renderer->DrawFrame();
-    }
+    m_windowManager->update();
+    m_renderer->DrawFrame();
+}
 
+bool Engine::isRunning() const
+{
+    return m_initialized;
+}
+
+MeshHandle Engine::CreateMesh(const MeshDesc& desc)
+{
+    if (!m_renderer)
+    {
+        VE_LOG(LogEngine, Error, "Cannot create mesh: renderer is not initialized");
+        return MeshHandle();
+    }
+    return m_renderer->CreateMesh(desc);
+}
+
+void Engine::DestroyMesh(MeshHandle handle)
+{
+    if (m_renderer)
+    {
+        m_renderer->DestroyMesh(handle);
+    }
+}
+
+void Engine::EngineStop() 
+{
     m_renderer->Shutdown();
+    m_initialized = false;
 }

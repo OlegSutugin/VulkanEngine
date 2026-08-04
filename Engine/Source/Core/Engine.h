@@ -3,6 +3,8 @@
 #include <memory>
 #include <string>
 #include "GameConfig.h"
+#include "Render/MeshDesc.h"
+#include "EngineTypes.h"
 
 namespace VulkanEngine
 {
@@ -15,9 +17,15 @@ public:
     Engine(const GameConfig& inConfig = GameConfig());
     ~Engine();
 
-    void run();
+    void Tick(float deltaTime);
+    bool isRunning() const;
+
+    //meshes temp
+    MeshHandle CreateMesh(const MeshDesc& desc);
+    void DestroyMesh(MeshHandle handle);
 
 private:
+    void EngineStop();
     std::unique_ptr<GLFWWindowManager> m_windowManager;
     std::unique_ptr<IRenderer> m_renderer;
 

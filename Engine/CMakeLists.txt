@@ -10,12 +10,14 @@ set(ENGINE_SOURCE_FILES
 	Source/Core/Engine.cpp
 	Source/Core/Utility.h
 	Source/Core/GameConfig.h
+	Source/Core/EngineTypes.h
 	
 	Source/Log/Log.h
 	Source/Log/Log.cpp
 
 	Source/Render/IRenderer.h
 	Source/Render/Vertex.h
+	Source/Render/MeshDesc.h
 	Source/Render/Vulkan/VulkanRenderer.h
 	Source/Render/Vulkan/VulkanRenderer.cpp
 	Source/Render/Vulkan/VulkanVertexLayout.h

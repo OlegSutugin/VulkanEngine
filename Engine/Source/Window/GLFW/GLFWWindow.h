@@ -14,7 +14,7 @@ using WindowId = int;
 struct WindowSettings
 {
     std::string title{};
-    int width{1920};
+    int width{1080};
     int height{1080};
     int x_Pos{50};
     int y_Pos{50};

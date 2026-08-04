@@ -1,5 +1,7 @@
 #pragma once
 #include "Core/GameConfig.h"
+#include "Core/EngineTypes.h"
+#include "MeshDesc.h"
 
 namespace VulkanEngine
 {
@@ -15,5 +17,8 @@ public:
     virtual void DrawFrame() = 0;
     virtual void Shutdown() = 0;
     virtual void WindowWasResized(int id, int newWidth, int newHeight) = 0;
+
+    virtual MeshHandle CreateMesh(const MeshDesc& desc) = 0;
+    virtual void DestroyMesh(MeshHandle handle) = 0;
 };
 }  // namespace VulkanEngine

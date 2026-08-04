@@ -40,7 +40,6 @@ void VulkanRenderer::RegisterWindow(int windowId, void* nativeWindowHandle)
         PickPhysicalDevice(surface);
         CreateLogicalDevice();
         CreateCommandPool();
-        CreateMeshBuffers();
         m_deviceCreated = true;
     }
 
@@ -647,22 +646,6 @@ inline void VulkanRenderer::CreateDeviceLocalBuffer(
     vkFreeMemory(m_device, stagingBufferMemory, nullptr);
 }
 
-void VulkanRenderer::CreateMeshBuffers()
-{
-    m_meshes.reserve(m_gameConfig.meshes.size());
-
-    for (const auto& meshDesc : m_gameConfig.meshes)
-    {
-        GpuMesh gpuMesh{};
-        gpuMesh.indexCount = static_cast<uint32_t>(meshDesc.indices.size());
-
-        CreateDeviceLocalBuffer(meshDesc.vertices, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, gpuMesh.vertexBuffer, gpuMesh.vertexBufferMemory);
-        CreateDeviceLocalBuffer(meshDesc.indices, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, gpuMesh.indexBuffer, gpuMesh.indexBufferMemory);
-
-        m_meshes.push_back(gpuMesh);
-    }
-}
-
 void VulkanRenderer::CreateBuffer(
     VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory)
 {
@@ -824,7 +807,7 @@ void VulkanRenderer::RecordCommandBuffer(WindowRenderContext& context, VkCommand
     vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
     // for all meshes
-    for (const auto& mesh : m_meshes)
+    for (const auto& [id, mesh] : m_meshes)
     {
         VkBuffer vertexBuffers[] = {mesh.vertexBuffer};
         VkDeviceSize offsets[] = {0};
@@ -1036,14 +1019,14 @@ void VulkanRenderer::Shutdown()
         m_commandPool = VK_NULL_HANDLE;
     }
 
-    for (const auto& mesh : m_meshes)
+    for (auto& [id, mesh] : m_meshes)
     {
         vkDestroyBuffer(m_device, mesh.indexBuffer, nullptr);
         vkFreeMemory(m_device, mesh.indexBufferMemory, nullptr);
-
         vkDestroyBuffer(m_device, mesh.vertexBuffer, nullptr);
         vkFreeMemory(m_device, mesh.vertexBufferMemory, nullptr);
     }
+    m_meshes.clear();
 
     if (m_device != VK_NULL_HANDLE)
     {
@@ -1070,6 +1053,34 @@ void VulkanRenderer::WindowWasResized(int id, int newWidth, int newHeight)
     {
         VE_LOG(VulkanRenderLog, Warning, "Window was resized, but render doesn't store that id");
     }
+}
+
+MeshHandle VulkanRenderer::CreateMesh(const MeshDesc& desc)
+{
+    GpuMesh gpuMesh{};
+    gpuMesh.indexCount = static_cast<uint32_t>(desc.indices.size());
+
+    CreateDeviceLocalBuffer(desc.vertices, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, gpuMesh.vertexBuffer, gpuMesh.vertexBufferMemory);
+    CreateDeviceLocalBuffer(desc.indices, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, gpuMesh.indexBuffer, gpuMesh.indexBufferMemory);
+
+    uint32_t id = m_nextMeshId++;
+    m_meshes[id] = gpuMesh;
+    return MeshHandle{id};
+}
+
+void VulkanRenderer::DestroyMesh(MeshHandle handle)
+{
+    auto it = m_meshes.find(handle.id);
+    if (it == m_meshes.end()) return;
+
+    vkDeviceWaitIdle(m_device);  // to do lag!!!!!
+
+    vkDestroyBuffer(m_device, it->second.vertexBuffer, nullptr);
+    vkFreeMemory(m_device, it->second.vertexBufferMemory, nullptr);
+    vkDestroyBuffer(m_device, it->second.indexBuffer, nullptr);
+    vkFreeMemory(m_device, it->second.indexBufferMemory, nullptr);
+
+    m_meshes.erase(it);
 }
 
 #pragma region Cleanup

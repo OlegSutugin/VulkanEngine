@@ -72,6 +72,9 @@ public:
     virtual void Shutdown() override;
     virtual void WindowWasResized(int id, int newWidth, int newHeight) override;
 
+    virtual MeshHandle CreateMesh(const MeshDesc& desc) override;
+    virtual void DestroyMesh(MeshHandle handle) override;
+
 private:
 #pragma region Instance & Device
     void CreateInstance();
@@ -107,7 +110,6 @@ private:
 #pragma endregion
 
 #pragma region Vertex & Index buffers
-    void CreateMeshBuffers();
     void CreateBuffer(
         VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
     void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
@@ -141,7 +143,9 @@ private:
     bool m_deviceCreated = false;
 
     std::unordered_map<int, WindowRenderContext> m_windowContexts;
-    std::vector<GpuMesh> m_meshes;
+
+    std::unordered_map<uint32_t, GpuMesh> m_meshes;
+    uint32_t m_nextMeshId = 1;
 
     GameConfig m_gameConfig;
 
