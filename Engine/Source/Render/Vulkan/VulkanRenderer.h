@@ -78,6 +78,7 @@ public:
     virtual void DrawFrame() override;
     virtual void Shutdown() override;
     virtual void WindowWasResized(int id, int newWidth, int newHeight) override;
+    void SetCameraView(const glm::mat4& view);
 
     virtual MeshHandle CreateMesh(const MeshDesc& desc) override;
     virtual void DestroyMesh(MeshHandle handle) override;
@@ -163,6 +164,7 @@ private:
     uint32_t m_nextMeshId = 1;
 
     GameConfig m_gameConfig;
+    glm::mat4 m_cameraView = glm::mat4(1.0f);
 
     template <typename T>
     void CreateDeviceLocalBuffer(const std::vector<T>& data, VkBufferUsageFlagBits usage, VkBuffer& outBuffer, VkDeviceMemory& outMemory);

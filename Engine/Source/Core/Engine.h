@@ -10,6 +10,8 @@ namespace VulkanEngine
 {
 class GLFWWindowManager;
 class IRenderer;
+class Camera;
+class Input;
 
 class Engine final
 {
@@ -28,6 +30,8 @@ private:
     void EngineStop();
     std::unique_ptr<GLFWWindowManager> m_windowManager;
     std::unique_ptr<IRenderer> m_renderer;
+    std::unique_ptr<Camera> m_camera;
+    std::unique_ptr<Input> m_input;
 
     bool m_initialized{false};
     GameConfig m_gameConfig;

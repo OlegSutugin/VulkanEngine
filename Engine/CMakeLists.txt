@@ -11,9 +11,15 @@ set(ENGINE_SOURCE_FILES
 	Source/Core/Utility.h
 	Source/Core/GameConfig.h
 	Source/Core/EngineTypes.h
+	Source/Core/PlatformDefines.h
 	
 	Source/Log/Log.h
 	Source/Log/Log.cpp
+
+	Source/Runtime/Camera.h
+	Source/Runtime/Camera.cpp
+	Source/Runtime/Input.h
+	Source/Runtime/Input.cpp
 
 	Source/Render/IRenderer.h
 	Source/Render/Vertex.h

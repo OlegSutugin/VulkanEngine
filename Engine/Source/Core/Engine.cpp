@@ -2,6 +2,8 @@
 #include "Log/Log.h"
 #include "Window/GLFW/GLFWWindowManager.h"
 #include "Render/Vulkan/VulkanRenderer.h"
+#include "Runtime/Camera.h"
+#include "Runtime/Input.h"
 #include <format>
 
 using namespace VulkanEngine;
@@ -14,6 +16,9 @@ Engine::Engine(const GameConfig& inConfig) : m_gameConfig(inConfig)
 
     m_windowManager = std::make_unique<GLFWWindowManager>();
     m_renderer = std::make_unique<VulkanRenderer>();
+    m_camera = std::make_unique<Camera>();
+    m_input = std::make_unique<Input>();
+
     m_renderer->Init(m_gameConfig);
 
     m_windowManager->setOnWindowClosedCallback([this](WindowId id) { m_renderer->UnregisterWindow(id); });
@@ -37,6 +42,8 @@ Engine::Engine(const GameConfig& inConfig) : m_gameConfig(inConfig)
     {
         window->setTitle(m_gameConfig.windowTitle);
         m_renderer->RegisterWindow(windowCreationResult.value(), window->getNativeHandle());
+
+        m_input->Init(window);
     }
 
 #pragma region MultiWindowing
@@ -65,7 +72,21 @@ void Engine::Tick(float deltaTime)
         return;
     }
 
+    if (m_input && m_input->IsKeyPressed(GLFW_KEY_W)) m_camera->MoveForward(deltaTime);
+    if (m_input && m_input->IsKeyPressed(GLFW_KEY_S)) m_camera->MoveForward(-deltaTime);
+    if (m_input && m_input->IsKeyPressed(GLFW_KEY_D)) m_camera->MoveRight(deltaTime);
+    if (m_input && m_input->IsKeyPressed(GLFW_KEY_A)) m_camera->MoveRight(-deltaTime);
+
     m_windowManager->update();
+    m_input->Update();
+
+    const float mouseSensitivity = 0.1f;
+    float yawDelta = -m_input->GetMouseDeltaX() * mouseSensitivity;
+    float pitchDelta = -m_input->GetMouseDeltaY() * mouseSensitivity;
+    m_camera->Rotate(yawDelta, pitchDelta);
+
+    m_renderer->SetCameraView(m_camera->GetView());
+
     m_renderer->DrawFrame();
 }
 

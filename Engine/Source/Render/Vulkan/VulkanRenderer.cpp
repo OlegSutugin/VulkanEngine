@@ -1,6 +1,7 @@
 #include "VulkanRenderer.h"
 #include "Render/Vertex.h"
 #include "Render/Vulkan/VulkanVertexLayout.h"
+#include "Core/PlatformDefines.h"
 
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
@@ -742,19 +743,12 @@ void VulkanRenderer::CreateUniformBuffers(WindowRenderContext& context)
 
 void VulkanRenderer::UpdateUniformBuffer(WindowRenderContext& context)
 {
-    static auto startTime = std::chrono::high_resolution_clock::now();
-
-    auto currentTime = std::chrono::high_resolution_clock::now();
-    float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
-
     UniformBufferObject ubo{};
-    ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    ubo.model = glm::mat4(1.0f);
+    ubo.view = m_cameraView;
 
-    ubo.view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-
-    ubo.proj = glm::perspective(glm::radians(45.0f), context.swapchainExtent.width / (float)context.swapchainExtent.height, 0.1f, 10.0f);
-
-    ubo.proj[1][1] *= -1;
+    ubo.proj = glm::perspective(glm::radians(45.0f), context.swapchainExtent.width / (float)context.swapchainExtent.height, 0.1f, 100.0f);
+    CLIP_SPACE_Y_FLIP(ubo.proj);
 
     memcpy(context.uniformBuffersMapped[0], &ubo, sizeof(ubo));
 }
@@ -1173,6 +1167,11 @@ void VulkanRenderer::WindowWasResized(int id, int newWidth, int newHeight)
     }
 }
 
+void VulkanRenderer::SetCameraView(const glm::mat4& view)
+{
+    m_cameraView = view;
+}
+
 MeshHandle VulkanRenderer::CreateMesh(const MeshDesc& desc)
 {
     GpuMesh gpuMesh{};
@@ -1269,5 +1268,7 @@ void VulkanRenderer::DestroyWindowRenderContext(WindowRenderContext& context)
         vkDestroySurfaceKHR(m_instance, context.surface, nullptr);
         context.surface = VK_NULL_HANDLE;
     }
+
+    context.nativeWindowHandle = nullptr;
 }
 #pragma endregion
