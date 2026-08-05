@@ -31,6 +31,7 @@ public:
     bool shouldClose() const;
     GLFWwindow* getNativeHandle();
     std::function<void(int newWidth, int newHeight)> m_onWindowResizedCallback;
+    std::function<void(int focused)> m_onWindowFocusChangedCallback;
 
 private:
     GLFWwindow* m_window{nullptr};

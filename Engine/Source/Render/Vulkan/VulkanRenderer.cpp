@@ -745,7 +745,7 @@ void VulkanRenderer::UpdateUniformBuffer(WindowRenderContext& context)
 {
     UniformBufferObject ubo{};
     ubo.model = glm::mat4(1.0f);
-    ubo.view = m_cameraView;
+    ubo.view = context.cameraView;
 
     ubo.proj = glm::perspective(glm::radians(45.0f), context.swapchainExtent.width / (float)context.swapchainExtent.height, 0.1f, 100.0f);
     CLIP_SPACE_Y_FLIP(ubo.proj);
@@ -1167,9 +1167,13 @@ void VulkanRenderer::WindowWasResized(int id, int newWidth, int newHeight)
     }
 }
 
-void VulkanRenderer::SetCameraView(const glm::mat4& view)
+void VulkanRenderer::SetCameraView(int windowId, const glm::mat4& view)
 {
-    m_cameraView = view;
+    auto it = m_windowContexts.find(windowId);
+    if (it != m_windowContexts.end())
+    {
+        it->second.cameraView = view;
+    }
 }
 
 MeshHandle VulkanRenderer::CreateMesh(const MeshDesc& desc)

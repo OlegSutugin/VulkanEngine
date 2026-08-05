@@ -14,20 +14,48 @@ Engine::Engine(const GameConfig& inConfig) : m_gameConfig(inConfig)
 {
     VE_LOG(LogEngine, Display, "Initialize Engine");
 
+    m_input = std::make_unique<Input>();
     m_windowManager = std::make_unique<GLFWWindowManager>();
     m_renderer = std::make_unique<VulkanRenderer>();
-    m_camera = std::make_unique<Camera>();
-    m_input = std::make_unique<Input>();
 
     m_renderer->Init(m_gameConfig);
 
-    m_windowManager->setOnWindowClosedCallback([this](WindowId id) { m_renderer->UnregisterWindow(id); });
+    m_windowManager->setOnWindowClosedCallback(
+        [this](WindowId id)
+        {
+            m_renderer->UnregisterWindow(id);
+            m_cameras.erase(id);
+            if (m_focusedWindowId == id)
+            {
+                m_focusedWindowId.reset();
+                m_input->SetWindowToFocus(nullptr);
+            }
+        });
+
     m_windowManager->setOnWindowResizedCallback(
         [this](int id, int newWidth, int newHeight)
         {
             if (m_renderer)
             {
                 m_renderer->WindowWasResized(id, newWidth, newHeight);
+            }
+        });
+
+    m_windowManager->setOnWindowFocusChangedCallback(
+        [this](WindowId id, bool focused)
+        {
+            if (focused)
+            {
+                m_focusedWindowId = id;
+                if (auto window = m_windowManager->getWindowById(id))
+                {
+                    m_input->SetWindowToFocus(window);
+                }
+            }
+            else if (m_focusedWindowId == id)
+            {
+                m_focusedWindowId.reset();
+                m_input->SetWindowToFocus(nullptr);
             }
         });
 
@@ -42,12 +70,11 @@ Engine::Engine(const GameConfig& inConfig) : m_gameConfig(inConfig)
     {
         window->setTitle(m_gameConfig.windowTitle);
         m_renderer->RegisterWindow(windowCreationResult.value(), window->getNativeHandle());
-
-        m_input->Init(window);
+        RegisterWindowViewport(windowCreationResult.value(), window);
     }
 
 #pragma region MultiWindowing
-    /*WindowSettings settings2;
+    WindowSettings settings2;
     settings2.title = "Second";
     settings2.width = 400;
     settings2.height = 400;
@@ -56,7 +83,8 @@ Engine::Engine(const GameConfig& inConfig) : m_gameConfig(inConfig)
     {
         window->setTitle(std::format("Vulkan engine v1 - second window"));
         m_renderer->RegisterWindow(windowCreationResult2.value(), window->getNativeHandle());
-    }*/
+        RegisterWindowViewport(windowCreationResult2.value(), window);
+    }
 #pragma endregion
 
     m_initialized = true;
@@ -72,20 +100,32 @@ void Engine::Tick(float deltaTime)
         return;
     }
 
-    if (m_input && m_input->IsKeyPressed(GLFW_KEY_W)) m_camera->MoveForward(deltaTime);
-    if (m_input && m_input->IsKeyPressed(GLFW_KEY_S)) m_camera->MoveForward(-deltaTime);
-    if (m_input && m_input->IsKeyPressed(GLFW_KEY_D)) m_camera->MoveRight(deltaTime);
-    if (m_input && m_input->IsKeyPressed(GLFW_KEY_A)) m_camera->MoveRight(-deltaTime);
-
     m_windowManager->update();
     m_input->Update();
 
-    const float mouseSensitivity = 0.1f;
-    float yawDelta = -m_input->GetMouseDeltaX() * mouseSensitivity;
-    float pitchDelta = -m_input->GetMouseDeltaY() * mouseSensitivity;
-    m_camera->Rotate(yawDelta, pitchDelta);
+    if (m_focusedWindowId.has_value())
+    {
+        auto it = m_cameras.find(*m_focusedWindowId);
+        if (it != m_cameras.end())
+        {
+            Camera* activeCamera = it->second.get();
 
-    m_renderer->SetCameraView(m_camera->GetView());
+            if (m_input->IsKeyPressed(GLFW_KEY_W)) activeCamera->MoveForward(deltaTime);
+            if (m_input->IsKeyPressed(GLFW_KEY_S)) activeCamera->MoveForward(-deltaTime);
+            if (m_input->IsKeyPressed(GLFW_KEY_D)) activeCamera->MoveRight(deltaTime);
+            if (m_input->IsKeyPressed(GLFW_KEY_A)) activeCamera->MoveRight(-deltaTime);
+
+            const float mouseSensitivity = 0.1f;
+            float yawDelta = -m_input->GetMouseDeltaX() * mouseSensitivity;
+            float pitchDelta = -m_input->GetMouseDeltaY() * mouseSensitivity;
+            activeCamera->Rotate(yawDelta, pitchDelta);
+        }
+    }
+
+    for (const auto& [windowId, camera] : m_cameras)
+    {
+        m_renderer->SetCameraView(windowId, camera->GetView());
+    }
 
     m_renderer->DrawFrame();
 }
@@ -117,4 +157,15 @@ void Engine::EngineStop()
 {
     m_renderer->Shutdown();
     m_initialized = false;
+}
+
+void Engine::RegisterWindowViewport(int windowId, std::shared_ptr<GLFWWindow> window)
+{
+    m_cameras[windowId] = std::make_unique<Camera>();
+
+    if (!m_focusedWindowId.has_value())
+    {
+        m_focusedWindowId = windowId;
+        m_input->SetWindowToFocus(window);
+    }
 }

@@ -26,6 +26,7 @@ public:
 
     void setOnWindowClosedCallback(std::function<void(WindowId)> callback);
     void setOnWindowResizedCallback(std::function<void(WindowId, int, int)> callback);
+    void setOnWindowFocusChangedCallback(std::function<void(WindowId, bool)> callback);
 
 private:
     bool m_initialized{false};
@@ -33,6 +34,7 @@ private:
     int m_windowIdCounter{1};
     std::function<void(WindowId)> m_onWindowClosedCallback;
     std::function<void(WindowId, int, int)> m_onWindowResizedCallback;
+    std::function<void(WindowId, bool)> m_onWindowFocusChangedCallback;
 };
 
 }  // namespace VulkanEngine

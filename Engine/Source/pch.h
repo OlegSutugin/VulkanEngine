@@ -13,6 +13,7 @@
 #include <concepts>
 #include <unordered_map>
 #include <expected>
+#include <optional>
 
 #include <filesystem>
 #include <source_location>

@@ -74,6 +74,14 @@ std::expected<WindowId, WindowCreationError> GLFWWindowManager::createWindow(con
         }
     };
 
+    window->m_onWindowFocusChangedCallback = [this, id](bool focused)
+    {
+        if (m_onWindowFocusChangedCallback)
+        {
+            m_onWindowFocusChangedCallback(id, focused);
+        }
+    };
+
     VE_LOG(LogGLFWWindowManager, Display, "Added window with id: {}", id);
 
     return id;
@@ -119,4 +127,9 @@ void GLFWWindowManager::setOnWindowClosedCallback(std::function<void(WindowId)> 
 void GLFWWindowManager::setOnWindowResizedCallback(std::function<void(WindowId, int, int)> callback)
 {
     m_onWindowResizedCallback = std::move(callback);
+}
+
+void GLFWWindowManager::setOnWindowFocusChangedCallback(std::function<void(WindowId, bool)> callback)
+{
+    m_onWindowFocusChangedCallback = std::move(callback);
 }

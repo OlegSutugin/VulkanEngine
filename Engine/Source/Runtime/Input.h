@@ -9,13 +9,14 @@ class GLFWWindow;
 class Input
 {
 public:
-    void Init(std::shared_ptr<GLFWWindow> window);
     bool IsKeyPressed(int key) const;
     bool IsMouseButtonPressed(int button) const;
 
     void Update();
     float GetMouseDeltaX() const;
     float GetMouseDeltaY() const;
+
+    void SetWindowToFocus(std::shared_ptr<GLFWWindow> window);
 
 private:
     void BeginMouseCapture();

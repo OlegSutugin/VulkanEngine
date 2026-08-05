@@ -16,6 +16,17 @@ void GLFWSizeCallback(GLFWwindow* window, int width, int height)
         self->m_onWindowResizedCallback(width, height);
     }
 }
+void GLFWFocusCallback(GLFWwindow* window, int focused)
+{
+    auto* self = static_cast<GLFWWindow*>(glfwGetWindowUserPointer(window));
+    {
+        if (self && self->m_onWindowFocusChangedCallback)
+        {
+            self->m_onWindowFocusChangedCallback(focused == GLFW_TRUE);
+        }
+    }
+}
+
 }  // namespace
 
 GLFWWindow::GLFWWindow(const WindowSettings& settings)
@@ -32,6 +43,7 @@ GLFWWindow::GLFWWindow(const WindowSettings& settings)
 
     glfwSetWindowUserPointer(m_window, this);
     glfwSetWindowSizeCallback(m_window, GLFWSizeCallback);
+    glfwSetWindowFocusCallback(m_window, GLFWFocusCallback);
 }
 
 GLFWWindow::~GLFWWindow()
@@ -40,6 +52,7 @@ GLFWWindow::~GLFWWindow()
     {
         glfwSetWindowUserPointer(m_window, nullptr);
         glfwSetWindowSizeCallback(m_window, nullptr);
+        glfwSetWindowFocusCallback(m_window, nullptr);
         glfwDestroyWindow(m_window);
         m_window = nullptr;
     }

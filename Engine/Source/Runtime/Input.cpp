@@ -5,11 +5,6 @@
 
 using namespace VulkanEngine;
 
-void Input::Init(std::shared_ptr<GLFWWindow> window)
-{
-    m_window = window;
-}
-
 bool Input::IsKeyPressed(int key) const
 {
     if (!m_window || !m_window->getNativeHandle()) return false;
@@ -69,6 +64,18 @@ float Input::GetMouseDeltaX() const
 float Input::GetMouseDeltaY() const
 {
     return m_deltaY;
+}
+
+void Input::SetWindowToFocus(std::shared_ptr<GLFWWindow> window)
+{
+    if (window == m_window) return;
+
+    if (m_isCapturing)
+    {
+        EndMouseCapture();
+    }
+
+    m_window = window;
 }
 
 void Input::BeginMouseCapture()
