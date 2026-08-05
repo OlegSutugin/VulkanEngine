@@ -74,17 +74,17 @@ Engine::Engine(const GameConfig& inConfig) : m_gameConfig(inConfig)
     }
 
 #pragma region MultiWindowing
-    WindowSettings settings2;
-    settings2.title = "Second";
-    settings2.width = 400;
-    settings2.height = 400;
-    const auto windowCreationResult2 = m_windowManager->createWindow(settings2);
-    if (auto window = m_windowManager->getWindowById(windowCreationResult2.value()))
-    {
-        window->setTitle(std::format("Vulkan engine v1 - second window"));
-        m_renderer->RegisterWindow(windowCreationResult2.value(), window->getNativeHandle());
-        RegisterWindowViewport(windowCreationResult2.value(), window);
-    }
+    // WindowSettings settings2;
+    // settings2.title = "Second";
+    // settings2.width = 400;
+    // settings2.height = 400;
+    // const auto windowCreationResult2 = m_windowManager->createWindow(settings2);
+    // if (auto window = m_windowManager->getWindowById(windowCreationResult2.value()))
+    // {
+    //     window->setTitle(std::format("Vulkan engine v1 - second window"));
+    //     m_renderer->RegisterWindow(windowCreationResult2.value(), window->getNativeHandle());
+    //     RegisterWindowViewport(windowCreationResult2.value(), window);
+    //}
 #pragma endregion
 
     m_initialized = true;

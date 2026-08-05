@@ -3,6 +3,7 @@
 #include <memory>
 #include <string>
 #include <optional>
+#include <unordered_map>
 #include "GameConfig.h"
 #include "Render/MeshDesc.h"
 #include "EngineTypes.h"

@@ -2,10 +2,7 @@
 #include "Render/Vertex.h"
 #include "Render/Vulkan/VulkanVertexLayout.h"
 #include "Core/PlatformDefines.h"
-
-#define GLM_FORCE_RADIANS
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
+#include "Libraries/Common/Math.h"
 
 #include "pch.h"
 #include <cstring>
@@ -744,10 +741,11 @@ void VulkanRenderer::CreateUniformBuffers(WindowRenderContext& context)
 void VulkanRenderer::UpdateUniformBuffer(WindowRenderContext& context)
 {
     UniformBufferObject ubo{};
-    ubo.model = glm::mat4(1.0f);
+    ubo.model = Math3D::Mat4::Identity();
     ubo.view = context.cameraView;
 
-    ubo.proj = glm::perspective(glm::radians(45.0f), context.swapchainExtent.width / (float)context.swapchainExtent.height, 0.1f, 100.0f);
+    ubo.proj = Math3D::Mat4::PerspectiveProjectionMatrix(
+        Math::DegreesToRadians(45.0f), context.swapchainExtent.width / (float)context.swapchainExtent.height, 0.1f, 100.0f);
     CLIP_SPACE_Y_FLIP(ubo.proj);
 
     memcpy(context.uniformBuffersMapped[0], &ubo, sizeof(ubo));
@@ -1167,7 +1165,7 @@ void VulkanRenderer::WindowWasResized(int id, int newWidth, int newHeight)
     }
 }
 
-void VulkanRenderer::SetCameraView(int windowId, const glm::mat4& view)
+void VulkanRenderer::SetCameraView(int windowId, const Math3D::Mat4& view)
 {
     auto it = m_windowContexts.find(windowId);
     if (it != m_windowContexts.end())

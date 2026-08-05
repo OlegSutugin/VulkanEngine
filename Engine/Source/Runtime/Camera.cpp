@@ -1,5 +1,7 @@
 #include "Camera.h"
-#include <glm/gtc/matrix_transform.hpp>
+#include "Libraries/Common/Math.h"
+
+#include <algorithm>
 
 using namespace VulkanEngine;
 
@@ -15,9 +17,12 @@ void Camera::MoveForward(float amount)
 
 void Camera::MoveRight(float amount)
 {
-    glm::vec3 right = glm::normalize(glm::cross(m_front, m_up));
+    Math3D::Vec3 right = m_front.Cross(m_up).Normalized();
     m_position += right * amount * m_moveSpeed;
 }
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 void Camera::Rotate(float yawDelta, float pitchDelta)
 {
@@ -27,23 +32,23 @@ void Camera::Rotate(float yawDelta, float pitchDelta)
     UpdateVectors();
 }
 
-glm::mat4 Camera::GetView() const
+Math3D::Mat4 Camera::GetView() const
 {
-    return glm::lookAt(m_position, m_position + m_front, m_up);
+    return Math3D::Mat4::ViewMatrix(m_position, m_position + m_front, m_up);
 }
 
-glm::mat4 Camera::GetProj(float aspectRatio) const
+Math3D::Mat4 Camera::GetProj(float aspectRatio) const
 {
-    glm::mat4 proj = glm::perspective(glm::radians(m_fov), aspectRatio, 0.1f, 100.0f);
+    Math3D::Mat4 proj = Math3D::Mat4::PerspectiveProjectionMatrix(Math::DegreesToRadians(m_fov), aspectRatio, 0.1f, 100.0f);
     CLIP_SPACE_Y_FLIP(proj);
     return proj;
 }
 
 void Camera::UpdateVectors()
 {
-    glm::vec3 front;
-    front.x = cos(glm::radians(m_yaw)) * cos(glm::radians(m_pitch));
-    front.y = sin(glm::radians(m_yaw)) * cos(glm::radians(m_pitch));
-    front.z = sin(glm::radians(m_pitch));
-    m_front = glm::normalize(front);
+    Math3D::Vec3 front;
+    front.x = std::cos(Math::DegreesToRadians(m_yaw)) * std::cos(Math::DegreesToRadians(m_pitch));
+    front.y = std::sin(Math::DegreesToRadians(m_yaw)) * std::cos(Math::DegreesToRadians(m_pitch));
+    front.z = std::sin(Math::DegreesToRadians(m_pitch));
+    m_front = front.Normalized();
 }

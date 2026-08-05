@@ -3,7 +3,7 @@
 #include "Core/EngineTypes.h"
 #include "MeshDesc.h"
 
-#include <glm/glm.hpp>
+#include "Libraries/Math3D/Math3D.h"
 
 namespace VulkanEngine
 {
@@ -19,7 +19,7 @@ public:
     virtual void DrawFrame() = 0;
     virtual void Shutdown() = 0;
     virtual void WindowWasResized(int id, int newWidth, int newHeight) = 0;
-    virtual void SetCameraView(int windowId, const glm::mat4& view) = 0;
+    virtual void SetCameraView(int windowId, const Math3D::Mat4& view) = 0;
 
     virtual MeshHandle CreateMesh(const MeshDesc& desc) = 0;
     virtual void DestroyMesh(MeshHandle handle) = 0;

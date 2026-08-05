@@ -1,7 +1,7 @@
 #pragma once
 
 #include <vulkan/vulkan.h>
-#include <glm/glm.hpp>
+#include "Libraries/Math3D/Math3D.h"
 #include <array>
 
 namespace VulkanEngine
@@ -10,15 +10,15 @@ namespace VulkanEngine
 // TODO:: need to refactor on different API
 struct Vertex
 {
-    glm::vec2 pos;
-    glm::vec3 color;
+    Math3D::Vec2 pos;
+    Math3D::Vec3 color;
 };
 
 struct UniformBufferObject
 {
-    alignas(16) glm::mat4 model;
-    alignas(16) glm::mat4 view;
-    alignas(16) glm::mat4 proj;
+    alignas(16) Math3D::Mat4 model;
+    alignas(16) Math3D::Mat4 view;
+    alignas(16) Math3D::Mat4 proj;
 };
 
 }  // namespace VulkanEngine

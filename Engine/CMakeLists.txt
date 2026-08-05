@@ -37,6 +37,14 @@ set(ENGINE_SOURCE_FILES
 	Source/pch.cpp
 	Source/pch.h
 	.clang-format
+
+	Source/Libraries/Common/Math.h
+
+	Source/Libraries/Math3D/Math3D.h
+	Source/Libraries/Math3D/Vec2.h
+	Source/Libraries/Math3D/Vec3.h
+	Source/Libraries/Math3D/Vec4.h
+	Source/Libraries/Math3D/Mat4.h
 )
 
 add_library(${PROJECT_NAME}Lib ${ENGINE_SOURCE_FILES})

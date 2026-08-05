@@ -59,7 +59,7 @@ struct WindowRenderContext
     std::vector<VkDeviceMemory> uniformBuffersMemory{};
     std::vector<void*> uniformBuffersMapped{};
 
-    glm::mat4 cameraView = glm::mat4(1.0f);
+    Math3D::Mat4 cameraView = Math3D::Mat4::Identity();
 };
 
 struct GpuMesh
@@ -80,7 +80,7 @@ public:
     virtual void DrawFrame() override;
     virtual void Shutdown() override;
     virtual void WindowWasResized(int id, int newWidth, int newHeight) override;
-    virtual void SetCameraView(int windowId, const glm::mat4& view) override;
+    virtual void SetCameraView(int windowId, const Math3D::Mat4& view) override;
 
     virtual MeshHandle CreateMesh(const MeshDesc& desc) override;
     virtual void DestroyMesh(MeshHandle handle) override;
