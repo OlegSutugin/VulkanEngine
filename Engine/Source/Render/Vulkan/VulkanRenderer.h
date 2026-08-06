@@ -121,11 +121,8 @@ private:
     void CreateDescriptorSets(WindowRenderContext& context);
 #pragma endregion
 
-#pragma region Framebuffers
+#pragma region Frame & Vertex & Index & Uniform buffers
     void CreateFramebuffers(WindowRenderContext& context);
-#pragma endregion
-
-#pragma region Vertex & Index & Uniform buffers
     void CreateUniformBuffers(WindowRenderContext& context);
     void UpdateUniformBuffer(WindowRenderContext& context);
     void CreateBuffer(
@@ -170,5 +167,29 @@ private:
     template <typename T>
     void CreateDeviceLocalBuffer(const std::vector<T>& data, VkBufferUsageFlagBits usage, VkBuffer& outBuffer, VkDeviceMemory& outMemory);
 };
+
+template <typename T>
+inline void VulkanRenderer::CreateDeviceLocalBuffer(
+    const std::vector<T>& data, VkBufferUsageFlagBits usage, VkBuffer& outBuffer, VkDeviceMemory& outMemory)
+{
+    VkDeviceSize bufferSize = sizeof(T) * data.size();
+
+    VkBuffer stagingBuffer;
+    VkDeviceMemory stagingBufferMemory;
+    CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        stagingBuffer, stagingBufferMemory);
+
+    void* mapped;
+    vkMapMemory(m_device, stagingBufferMemory, 0, bufferSize, 0, &mapped);
+    memcpy(mapped, data.data(), (size_t)bufferSize);
+    vkUnmapMemory(m_device, stagingBufferMemory);
+
+    CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | usage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, outBuffer, outMemory);
+
+    CopyBuffer(stagingBuffer, outBuffer, bufferSize);
+
+    vkDestroyBuffer(m_device, stagingBuffer, nullptr);
+    vkFreeMemory(m_device, stagingBufferMemory, nullptr);
+}
 
 }  // namespace VulkanEngine

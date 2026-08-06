@@ -28,6 +28,12 @@ set(ENGINE_SOURCE_FILES
 	Source/Render/Vulkan/VulkanRenderer.cpp
 	Source/Render/Vulkan/VulkanVertexLayout.h
 	Source/Render/Vulkan/VulkanVertexLayout.cpp
+	Source/Render/Vulkan/VulkanSwapChain.cpp
+	Source/Render/Vulkan/VulkanPipeline.cpp
+	Source/Render/Vulkan/VulkanDescriptors.cpp
+	Source/Render/Vulkan/VulkanBuffers.cpp
+	Source/Render/Vulkan/VulkanCommands.cpp
+	Source/Render/Vulkan/VulkanDeviceHelpers.cpp
 
 	Source/Window/GLFW/GLFWWindow.h
 	Source/Window/GLFW/GLFWWindow.cpp
