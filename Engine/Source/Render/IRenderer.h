@@ -1,7 +1,8 @@
 #pragma once
 #include "Core/GameConfig.h"
 #include "Core/EngineTypes.h"
-#include "MeshDesc.h"
+#include "Libraries/Geometry/MeshDescriptor.h"
+#include "UniformBufferObject.h"
 
 #include "Libraries/Math3D/Math3D.h"
 

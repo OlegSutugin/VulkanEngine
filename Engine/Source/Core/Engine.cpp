@@ -2,8 +2,10 @@
 #include "Log/Log.h"
 #include "Window/GLFW/GLFWWindowManager.h"
 #include "Render/Vulkan/VulkanRenderer.h"
+#include "Runtime/World.h"
 #include "Runtime/Camera.h"
 #include "Runtime/Input.h"
+#include "Runtime/Actor/Actor.h"
 #include <format>
 
 using namespace VulkanEngine;
@@ -17,6 +19,8 @@ Engine::Engine(const GameConfig& inConfig) : m_gameConfig(inConfig)
     m_input = std::make_unique<Input>();
     m_windowManager = std::make_unique<GLFWWindowManager>();
     m_renderer = std::make_unique<VulkanRenderer>();
+
+    m_world = World::CreateWorld(m_renderer.get());
 
     m_renderer->Init(m_gameConfig);
 
@@ -74,17 +78,17 @@ Engine::Engine(const GameConfig& inConfig) : m_gameConfig(inConfig)
     }
 
 #pragma region MultiWindowing
-    // WindowSettings settings2;
-    // settings2.title = "Second";
-    // settings2.width = 400;
-    // settings2.height = 400;
-    // const auto windowCreationResult2 = m_windowManager->createWindow(settings2);
-    // if (auto window = m_windowManager->getWindowById(windowCreationResult2.value()))
-    // {
-    //     window->setTitle(std::format("Vulkan engine v1 - second window"));
-    //     m_renderer->RegisterWindow(windowCreationResult2.value(), window->getNativeHandle());
-    //     RegisterWindowViewport(windowCreationResult2.value(), window);
-    //}
+    /*WindowSettings settings2;
+    settings2.title = "Second";
+    settings2.width = 400;
+    settings2.height = 400;
+    const auto windowCreationResult2 = m_windowManager->createWindow(settings2);
+    if (auto window = m_windowManager->getWindowById(windowCreationResult2.value()))
+    {
+        window->setTitle(std::format("Vulkan engine v1 - second window"));
+        m_renderer->RegisterWindow(windowCreationResult2.value(), window->getNativeHandle());
+        RegisterWindowViewport(windowCreationResult2.value(), window);
+   }*/
 #pragma endregion
 
     m_initialized = true;
@@ -135,27 +139,18 @@ bool Engine::isRunning() const
     return m_initialized;
 }
 
-MeshHandle Engine::CreateMesh(const MeshDesc& desc)
+World* Engine::GetWorld() const
 {
-    if (!m_renderer)
-    {
-        VE_LOG(LogEngine, Error, "Cannot create mesh: renderer is not initialized");
-        return MeshHandle();
-    }
-    return m_renderer->CreateMesh(desc);
-}
-
-void Engine::DestroyMesh(MeshHandle handle)
-{
-    if (m_renderer)
-    {
-        m_renderer->DestroyMesh(handle);
-    }
+    return m_world.get();
 }
 
 void Engine::EngineStop()
 {
-    m_renderer->Shutdown();
+    if (m_renderer)
+    {
+        m_renderer->Shutdown();
+    }
+
     m_initialized = false;
 }
 

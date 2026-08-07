@@ -5,6 +5,8 @@
 #include <vector>
 #include <unordered_map>
 #include <optional>
+#include <thread>
+#include <atomic>
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>

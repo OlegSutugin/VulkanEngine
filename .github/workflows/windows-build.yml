@@ -7,7 +7,7 @@ on:
     branches: [ "main", "master" ]
 
 env:
-  TARGETS: HelloTriangle
+  TARGETS: WorldFullOfMeshes
   
 jobs:
   build:

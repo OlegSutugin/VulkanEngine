@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Render/Vertex.h"
+#include "Libraries/Geometry/Vertex.h"
 #include <vulkan/vulkan.h>
 #include <array>
 

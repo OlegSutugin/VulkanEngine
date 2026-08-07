@@ -57,7 +57,7 @@ void VulkanRenderer::RecordCommandBuffer(WindowRenderContext& context, VkCommand
     renderPassInfo.renderArea.offset = {0, 0};
     renderPassInfo.renderArea.extent = context.swapchainExtent;
 
-    VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
+    VkClearValue clearColor = {{{0.2f, 0.3f, 0.4f, 1.0f}}};
     renderPassInfo.clearValueCount = 1;
     renderPassInfo.pClearValues = &clearColor;
 

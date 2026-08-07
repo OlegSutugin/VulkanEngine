@@ -16,7 +16,7 @@ std::array<VkVertexInputAttributeDescription, 2> VulkanVertexLayout::GetAttribut
     std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};
     attributeDescriptions[0].binding = 0;
     attributeDescriptions[0].location = 0;
-    attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;  // vec2
+    attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;  // vec3
     attributeDescriptions[0].offset = offsetof(Vertex, pos);
 
     attributeDescriptions[1].binding = 0;

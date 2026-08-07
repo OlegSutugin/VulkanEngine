@@ -5,7 +5,7 @@
 #include <optional>
 #include <unordered_map>
 #include "GameConfig.h"
-#include "Render/MeshDesc.h"
+#include "Libraries/Geometry/MeshDescriptor.h"
 #include "EngineTypes.h"
 
 namespace VulkanEngine
@@ -13,8 +13,10 @@ namespace VulkanEngine
 class GLFWWindowManager;
 class GLFWWindow;
 class IRenderer;
+class World;
 class Camera;
 class Input;
+class MeshSubsystem;
 
 class Engine final
 {
@@ -25,9 +27,7 @@ public:
     void Tick(float deltaTime);
     bool isRunning() const;
 
-    // meshes temp
-    MeshHandle CreateMesh(const MeshDesc& desc);
-    void DestroyMesh(MeshHandle handle);
+    World* GetWorld() const;
 
 private:
     void EngineStop();
@@ -35,6 +35,7 @@ private:
 
     std::unique_ptr<GLFWWindowManager> m_windowManager;
     std::unique_ptr<IRenderer> m_renderer;
+    std::unique_ptr<World> m_world;
     std::unordered_map<int, std::unique_ptr<Camera>> m_cameras;
     std::unique_ptr<Input> m_input;
 

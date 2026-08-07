@@ -41,10 +41,10 @@ add_subdirectory(Engine)
 # ============================================
 # Games
 # ============================================
-add_subdirectory(Games/HelloTriangle)
+add_subdirectory(Games/WorldFullOfMeshes)
 
 # ============================================
 # Startup Project
 # ============================================
-set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT HelloTriangle)
+set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT WorldFullOfMeshes)
 

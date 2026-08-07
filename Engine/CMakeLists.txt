@@ -12,18 +12,37 @@ set(ENGINE_SOURCE_FILES
 	Source/Core/GameConfig.h
 	Source/Core/EngineTypes.h
 	Source/Core/PlatformDefines.h
+
+	Source/Core/Subsystems/EngineSubsystems/EngineSubsystem.h
+	Source/Core/Subsystems/EngineSubsystems/EngineSubsystem.cpp
+	Source/Core/Subsystems/WorldSubsystems/WorldSubsystem.h
+	Source/Core/Subsystems/WorldSubsystems/WorldSubsystem.cpp
+	Source/Core/Subsystems/WorldSubsystems/MeshSubsystem.h
+	Source/Core/Subsystems/WorldSubsystems/MeshSubsystem.cpp
 	
 	Source/Log/Log.h
 	Source/Log/Log.cpp
 
+	Source/Runtime/World.h
+	Source/Runtime/World.cpp
 	Source/Runtime/Camera.h
 	Source/Runtime/Camera.cpp
 	Source/Runtime/Input.h
 	Source/Runtime/Input.cpp
+	Source/Runtime/Actor/Actor.h
+	Source/Runtime/Actor/Actor.cpp
+	Source/Runtime/Actor/CubeActor.h
+	Source/Runtime/Actor/CubeActor.cpp
+
+	Source/Runtime/ActorComponents/ActorComponent.h
+	Source/Runtime/ActorComponents/ActorComponent.cpp
+	Source/Runtime/ActorComponents/TransformableComponent.h
+	Source/Runtime/ActorComponents/TransformableComponent.cpp
+	Source/Runtime/ActorComponents/MeshComponent.h
+	Source/Runtime/ActorComponents/MeshComponent.cpp
 
 	Source/Render/IRenderer.h
-	Source/Render/Vertex.h
-	Source/Render/MeshDesc.h
+	Source/Render/UniformBufferObject.h
 	Source/Render/Vulkan/VulkanRenderer.h
 	Source/Render/Vulkan/VulkanRenderer.cpp
 	Source/Render/Vulkan/VulkanVertexLayout.h
@@ -45,6 +64,9 @@ set(ENGINE_SOURCE_FILES
 	.clang-format
 
 	Source/Libraries/Common/Math.h
+
+	Source/Libraries/Geometry/MeshDescriptor.h
+	Source/Libraries/Geometry/Vertex.h
 
 	Source/Libraries/Math3D/Math3D.h
 	Source/Libraries/Math3D/Vec2.h

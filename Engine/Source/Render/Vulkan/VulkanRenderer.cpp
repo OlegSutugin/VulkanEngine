@@ -1,5 +1,5 @@
 #include "VulkanRenderer.h"
-#include "Render/Vertex.h"
+#include "Libraries/Geometry/Vertex.h"
 #include "Render/Vulkan/VulkanVertexLayout.h"
 #include "Core/PlatformDefines.h"
 #include "pch.h"
