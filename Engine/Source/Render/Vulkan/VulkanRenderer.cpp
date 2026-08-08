@@ -383,6 +383,17 @@ void VulkanRenderer::DestroyMesh(MeshHandle handle)
     m_meshes.erase(it);
 }
 
+void VulkanRenderer::SetDrawItems(int windowId, const std::vector<MeshDrawItem>& items)
+{
+    auto it = m_windowContexts.find(windowId);
+    if (it == m_windowContexts.end())
+    {
+        return;
+    }
+
+    it->second.drawItems = items;
+}
+
 #pragma region Cleanup
 void VulkanRenderer::DestroyWindowRenderContext(WindowRenderContext& context)
 {

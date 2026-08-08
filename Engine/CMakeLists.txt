@@ -31,8 +31,8 @@ set(ENGINE_SOURCE_FILES
 	Source/Runtime/Input.cpp
 	Source/Runtime/Actor/Actor.h
 	Source/Runtime/Actor/Actor.cpp
-	Source/Runtime/Actor/CubeActor.h
-	Source/Runtime/Actor/CubeActor.cpp
+	Source/Runtime/Actor/PrimitiveMeshActor.h
+	Source/Runtime/Actor/PrimitiveMeshActor.cpp
 
 	Source/Runtime/ActorComponents/ActorComponent.h
 	Source/Runtime/ActorComponents/ActorComponent.cpp

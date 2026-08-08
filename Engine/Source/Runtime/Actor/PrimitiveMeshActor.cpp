@@ -1,15 +1,15 @@
-#include "CubeActor.h"
+#include "PrimitiveMeshActor.h"
 #include "Runtime/ActorComponents/MeshComponent.h"
-#include "Core/Subsystems/WorldSubsystems/MeshSubsystem.h"
 #include "Runtime/World.h"
 #include "Core/EngineTypes.h"
-#include "Log/log.h"
+#include "Log/Log.h"
 
 using namespace VulkanEngine;
 
 DEFINE_LOG_CATEGORY_STATIC(CubeActorLog);
 
-CubeActor::CubeActor(World* world, uint32_t id, const Transform& transform) : Actor(world, id, transform)
+PrimitiveMeshActor::PrimitiveMeshActor(World* world, uint32_t id, const Transform& transform, MeshPrimitive type)
+    : Actor(world, id, transform)
 {
     if (!world || !world->GetMeshSubsystem())
     {
@@ -17,12 +17,12 @@ CubeActor::CubeActor(World* world, uint32_t id, const Transform& transform) : Ac
         return;
     }
 
-    MeshHandle handle = world->GetMeshSubsystem()->GetOrCreatePrimitive(MeshPrimitive::Cube);
+    MeshHandle handle = world->GetMeshSubsystem()->GetOrCreatePrimitive(type);
     MeshComponent* mesh = CreateComponent<MeshComponent>(Transform::ZeroTransform());
     mesh->SetMesh(handle);
 }
 
-CubeActor::~CubeActor()
+PrimitiveMeshActor::~PrimitiveMeshActor()
 {
     //
 }

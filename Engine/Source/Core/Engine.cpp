@@ -106,6 +106,7 @@ void Engine::Tick(float deltaTime)
 
     m_windowManager->update();
     m_input->Update();
+    m_world->Tick(deltaTime);
 
     if (m_focusedWindowId.has_value())
     {
@@ -126,12 +127,17 @@ void Engine::Tick(float deltaTime)
         }
     }
 
+    auto meshDrawItems = m_world->CollectMeshDrawItems();
+
     for (const auto& [windowId, camera] : m_cameras)
     {
         m_renderer->SetCameraView(windowId, camera->GetView());
+        m_renderer->SetDrawItems(windowId, meshDrawItems);
     }
 
     m_renderer->DrawFrame();
+
+    m_world->FlushDestroyed();
 }
 
 bool Engine::isRunning() const

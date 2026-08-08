@@ -51,7 +51,6 @@ void VulkanRenderer::CreateUniformBuffers(WindowRenderContext& context)
 void VulkanRenderer::UpdateUniformBuffer(WindowRenderContext& context)
 {
     UniformBufferObject ubo{};
-    ubo.model = Math3D::Mat4::Identity();
     ubo.view = context.cameraView;
 
     ubo.proj = Math3D::Mat4::PerspectiveProjectionMatrix(

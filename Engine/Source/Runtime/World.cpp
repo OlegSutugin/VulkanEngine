@@ -26,6 +26,24 @@ World::World(IRenderer* renderer) : m_renderer(renderer)
     }
 }
 
+std::vector<MeshDrawItem> World::CollectMeshDrawItems() const
+{
+    // TODO: check is actor pending
+
+    std::vector<MeshDrawItem> result;
+
+    for (const auto& actor : m_actors)
+    {
+        if (actor->HasMeshes())
+        {
+            auto items = actor->getMeshesTransforms();
+            result.insert(result.end(), std::make_move_iterator(items.begin()), std::make_move_iterator(items.end()));
+        }
+    }
+
+    return result;
+}
+
 World::~World()
 {
     m_actors.clear();

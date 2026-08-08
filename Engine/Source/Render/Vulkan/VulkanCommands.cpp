@@ -57,7 +57,7 @@ void VulkanRenderer::RecordCommandBuffer(WindowRenderContext& context, VkCommand
     renderPassInfo.renderArea.offset = {0, 0};
     renderPassInfo.renderArea.extent = context.swapchainExtent;
 
-    VkClearValue clearColor = {{{0.2f, 0.3f, 0.4f, 1.0f}}};
+    VkClearValue clearColor = {{{0.2f, 0.3f, 0.8f, 1.0f}}};
     renderPassInfo.clearValueCount = 1;
     renderPassInfo.pClearValues = &clearColor;
 
@@ -83,14 +83,24 @@ void VulkanRenderer::RecordCommandBuffer(WindowRenderContext& context, VkCommand
     vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
     vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-    // for all meshes
-    for (const auto& [id, mesh] : m_meshes)
+    // for all meshes that clipped in CPU (from world)
+    for (const auto& item : context.drawItems)
     {
-        VkBuffer vertexBuffers[] = {mesh.vertexBuffer};
+        auto it = m_meshes.find(item.mesh.id);  // find gpu mesh by id
+        if (it == m_meshes.end())
+        {
+            continue;
+        }
+
+        const GpuMesh& gpuMesh = it->second;  // concrete mesh
+
+        vkCmdPushConstants(commandBuffer, context.pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(Math3D::Mat4), &item.worldMatrix);
+
+        VkBuffer vertexBuffers[] = {gpuMesh.vertexBuffer};
         VkDeviceSize offsets[] = {0};
         vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-        vkCmdBindIndexBuffer(commandBuffer, mesh.indexBuffer, 0, VK_INDEX_TYPE_UINT16);
-        vkCmdDrawIndexed(commandBuffer, mesh.indexCount, 1, 0, 0, 0);
+        vkCmdBindIndexBuffer(commandBuffer, gpuMesh.indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+        vkCmdDrawIndexed(commandBuffer, gpuMesh.indexCount, 1, 0, 0, 0);
     }
 
     vkCmdEndRenderPass(commandBuffer);

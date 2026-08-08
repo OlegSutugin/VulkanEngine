@@ -36,18 +36,20 @@ private:
         return std::unique_ptr<World>(new World(renderer));
     }
 
+    std::vector<MeshDrawItem> CollectMeshDrawItems() const;
+
 public:
     ~World();
 
     void Tick(float deltaTime);
 
-    template <typename T>
-    T* SpawnActor(const Transform& transform)
+    template <typename T, typename... Args>
+    T* SpawnActor(Args&&... args)
     {
         static_assert(std::is_base_of_v<Actor, T>, "T must be derived from Actor");
 
         uint32_t id = m_nextActorId;
-        auto actor = std::make_unique<T>(this, id, transform);
+        auto actor = std::make_unique<T>(this, id, std::forward<Args>(args)...);
         T* raw = actor.get();
         m_actorsById[id] = raw;
         m_actors.push_back(std::move(actor));

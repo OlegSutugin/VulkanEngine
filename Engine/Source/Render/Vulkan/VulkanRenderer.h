@@ -2,6 +2,7 @@
 #include "Render/IRenderer.h"
 #include <vulkan/vulkan.h>
 #include <array>
+#include <cstring>
 #include <vector>
 #include <unordered_map>
 #include <optional>
@@ -62,6 +63,8 @@ struct WindowRenderContext
     std::vector<void*> uniformBuffersMapped{};
 
     Math3D::Mat4 cameraView = Math3D::Mat4::Identity();
+
+    std::vector<MeshDrawItem> drawItems;
 };
 
 struct GpuMesh
@@ -86,6 +89,8 @@ public:
 
     virtual MeshHandle CreateMesh(const MeshDesc& desc) override;
     virtual void DestroyMesh(MeshHandle handle) override;
+
+    virtual void SetDrawItems(int windowId, const std::vector<MeshDrawItem>& items) override;
 
 private:
 #pragma region Instance & Device

@@ -13,9 +13,9 @@ namespace VulkanEngine
 enum class MeshPrimitive : uint8_t
 {
     Cube,
+    TrianglePyr,
     Sphere,
     Plane,
-    //
 };
 
 class MeshSubsystem final : public WorldSubsystem
@@ -23,7 +23,11 @@ class MeshSubsystem final : public WorldSubsystem
     // for primitives
     std::unordered_map<MeshPrimitive, MeshDesc> m_primitiveDescCache;
     std::unordered_map<MeshPrimitive, MeshHandle> m_primitiveHandleCache;
-    std::unordered_map<MeshPrimitive, std::function<MeshDesc()>> m_primitivesMap{{MeshPrimitive::Cube, MeshDesc::GetCube}};
+    std::unordered_map<MeshPrimitive, std::function<MeshDesc()>> m_primitivesMap{
+        {MeshPrimitive::Cube, MeshDesc::GetCube},                    //
+        {MeshPrimitive::TrianglePyr, MeshDesc::GetTrianglePyramid},  //
+        {MeshPrimitive::Plane, MeshDesc::GetPlane},                  //
+    };
 
     // for files
     std::unordered_map<std::string, MeshDesc> m_fileDescCache;

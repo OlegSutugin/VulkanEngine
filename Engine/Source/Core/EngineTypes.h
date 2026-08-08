@@ -13,6 +13,12 @@ struct MeshHandle
     bool IsValid() const { return id != 0; }
 };
 
+struct MeshDrawItem
+{
+    MeshHandle mesh;
+    Math3D::Mat4 worldMatrix;
+};
+
 struct Transform
 {
     Transform() {};

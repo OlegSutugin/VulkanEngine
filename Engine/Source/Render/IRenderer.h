@@ -24,5 +24,7 @@ public:
 
     virtual MeshHandle CreateMesh(const MeshDesc& desc) = 0;
     virtual void DestroyMesh(MeshHandle handle) = 0;
+
+    virtual void SetDrawItems(int windowId, const std::vector<MeshDrawItem>& items) = 0;
 };
 }  // namespace VulkanEngine
